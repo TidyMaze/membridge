@@ -85,6 +85,17 @@
   footer a:hover { color: var(--text); }
 
   code.inline { font-family: var(--mono); background: rgba(124,92,255,0.12); color: var(--accent-2); padding: 2px 6px; border-radius: 5px; font-size: 0.85em; }
+
+  .illustration { margin: 0 auto; display: block; max-width: 100%; }
+  .illustration.hero-img { max-width: 560px; margin-bottom: 50px; border-radius: 16px; }
+  .illustration.framed { border-radius: 14px; border: 1px solid var(--border); background: var(--bg-soft); padding: 18px; }
+  .illustration.framed.on-white { background: #fff; padding: 24px; }
+  .illustration.diagram-img { max-width: 640px; margin: 36px auto 0; }
+  .illustration.split-img { max-width: 720px; margin: 36px auto 0; }
+  .illustration.sequence-img { max-width: 360px; }
+  .illustration.stack-img { max-width: 220px; border-radius: 14px; }
+  .quickstart-layout { display: flex; align-items: center; gap: 32px; justify-content: center; flex-wrap: wrap; }
+  .quickstart-layout .term { margin: 0; }
 </style>
 </head>
 <body>
@@ -104,6 +115,7 @@
 
 <main>
   <section class="hero">
+    <img class="illustration hero-img" src="images/hero-two-surfaces-one-memory.png" alt="A laptop terminal and a browser chat window connected by a glowing encrypted link with a padlock at its center">
     <div class="pill">Built for the <b>MCP</b> era — works with Claude Code and Claude.ai</div>
     <h1>One encrypted memory.<br><span class="grad">Everywhere Claude works.</span></h1>
     <p class="sub">
@@ -141,6 +153,7 @@
       <div class="arrow">⇄</div>
       <div class="node"><b>Browser</b>Claude.ai<br>MCP tool calls</div>
     </div>
+    <img class="illustration diagram-img framed on-white" src="images/how-it-works-encrypt-bridge-decrypt.png" alt="Diagram: your device runs age encrypt, MemBridge stores ciphertext only, the other device runs age decrypt">
     <div class="grid3" style="margin-top:48px">
       <div class="card">
         <div class="icon">①</div>
@@ -168,7 +181,8 @@
       <h2>Encrypted at rest. Standards-based in transit.</h2>
       <p>No custom auth scheme to audit — OAuth 2.1, PKCE, and dynamic client registration, all over TLS.</p>
     </div>
-    <div class="grid2">
+    <img class="illustration split-img framed" src="images/security-in-transit-at-rest.png" alt="Diagram: data shielded in a TLS tunnel while in transit, then stored as scrambled ciphertext in a database at rest">
+    <div class="grid2" style="margin-top:36px">
       <div class="card">
         <h3>🔐 age encryption</h3>
         <p>Context is stored as ciphertext only. The CLI's <code class="inline">push</code>/<code class="inline">pull</code>
@@ -180,10 +194,13 @@
         <h3>🪪 GitHub OAuth + API keys</h3>
         <p>Identity comes from GitHub. API keys are sha256-hashed at rest; the raw key is shown exactly once.</p>
       </div>
-      <div class="card">
-        <h3>🔁 OAuth 2.1 + PKCE for MCP</h3>
-        <p>Claude Code and Claude.ai authorize via standard dynamic client registration and PKCE — no
-        manually-managed client secrets.</p>
+      <div class="card" style="display:flex; gap:18px; align-items:center; flex-wrap:wrap;">
+        <img class="illustration sequence-img" style="max-width:120px; flex-shrink:0;" src="images/oauth-pkce-sequence.png" alt="Sequence diagram: client registers, redirects, logs in via GitHub, consents, exchanges a code, and receives a token">
+        <div>
+          <h3>🔁 OAuth 2.1 + PKCE for MCP</h3>
+          <p>Claude Code and Claude.ai authorize via standard dynamic client registration and PKCE — no
+          manually-managed client secrets.</p>
+        </div>
       </div>
       <div class="card">
         <h3>🚧 Rate limited</h3>
@@ -198,15 +215,18 @@
       <h2>Self-host it in one <code class="inline">docker compose up</code></h2>
       <p>MemBridge is a Bun + Hono app with one Postgres dependency. No managed services required.</p>
     </div>
-    <div class="term">
-      <div class="term-bar"><span></span><span></span><span></span></div>
-      <pre><span class="c1">$</span> git clone https://github.com/TidyMaze/membridge && cd membridge
+    <div class="quickstart-layout">
+      <img class="illustration stack-img" src="images/quickstart-one-command-stack.png" alt="An arrow labeled with a dollar-sign terminal prompt dropping into a stacked server, gear, and shield, representing one command deploying the whole stack">
+      <div class="term">
+        <div class="term-bar"><span></span><span></span><span></span></div>
+        <pre><span class="c1">$</span> git clone https://github.com/TidyMaze/membridge && cd membridge
 <span class="c1">$</span> cp .env.example .env   <span class="c1"># set GH_CLIENT_ID / SECRET / BASE_URL</span>
 <span class="c1">$</span> docker compose up -d --build
 <span class="c2">✓</span> http://localhost:3000/health → {"ok":true}
 
 <span class="c1"># put a reverse proxy with automatic HTTPS (e.g. Caddy) in front,</span>
 <span class="c1"># point it at the app container, and you're done.</span></pre>
+      </div>
     </div>
   </section>
 </main>
