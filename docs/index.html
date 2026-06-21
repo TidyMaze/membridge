@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MemBridge — one encrypted memory, everywhere Claude works</title>
+<meta name="description" content="MemBridge syncs an end-to-end encrypted memory file between Claude Code and Claude.ai over MCP, with GitHub OAuth and OAuth 2.1 PKCE.">
+<style>
+  :root {
+    --bg: #0b0d10;
+    --bg-soft: #11151a;
+    --border: #1f2630;
+    --text: #e6edf3;
+    --text-dim: #8b97a5;
+    --accent: #7c5cff;
+    --accent-2: #34e2c4;
+    --mono: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--sans); scroll-behavior: smooth; }
+  a { color: var(--accent-2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .glow {
+    position: fixed; top: -20%; left: 50%; width: 1200px; height: 1200px;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, rgba(124,92,255,0.18), transparent 60%);
+    pointer-events: none; z-index: 0;
+  }
+
+  header { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(10px); background: rgba(11,13,16,0.7); border-bottom: 1px solid var(--border); }
+  nav { max-width: 1080px; margin: 0 auto; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; }
+  .brand .dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 0 16px var(--accent); }
+  nav .links { display: flex; gap: 24px; font-size: 0.9rem; color: var(--text-dim); }
+  nav .links a { color: var(--text-dim); }
+  nav .links a:hover { color: var(--text); }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 8px; font-size: 0.88rem; font-weight: 600; border: 1px solid var(--border); }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), #5a3df0); color: white; border: none; }
+  .btn-primary:hover { text-decoration: none; filter: brightness(1.1); }
+  .btn-ghost { color: var(--text); }
+  .btn-ghost:hover { text-decoration: none; border-color: var(--accent); }
+
+  main { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  .hero { padding: 110px 0 70px; text-align: center; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text-dim); font-size: 0.8rem; margin-bottom: 28px; }
+  .pill b { color: var(--accent-2); }
+  h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.08; margin: 0 0 20px; letter-spacing: -0.02em; }
+  h1 .grad { background: linear-gradient(135deg, var(--accent-2), var(--accent)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { font-size: 1.15rem; color: var(--text-dim); max-width: 620px; margin: 0 auto 36px; line-height: 1.6; }
+  .cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 50px; }
+
+  .term { margin: 0 auto; max-width: 680px; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; text-align: left; box-shadow: 0 30px 80px -30px rgba(124,92,255,0.25); }
+  .term-bar { display: flex; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .term-bar span { width: 11px; height: 11px; border-radius: 50%; background: #3a4250; }
+  .term pre { margin: 0; padding: 20px 22px; font-family: var(--mono); font-size: 0.86rem; line-height: 1.7; color: #c9d4de; overflow-x: auto; }
+  .term .c1 { color: var(--text-dim); }
+  .term .c2 { color: var(--accent-2); }
+  .term .c3 { color: var(--accent); }
+
+  section { padding: 70px 0; border-top: 1px solid var(--border); }
+  .section-head { text-align: center; margin-bottom: 48px; }
+  .section-head .tag { color: var(--accent-2); font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  .section-head h2 { font-size: 2rem; margin: 10px 0 12px; letter-spacing: -0.01em; }
+  .section-head p { color: var(--text-dim); max-width: 540px; margin: 0 auto; }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  @media (max-width: 760px) { .grid3, .grid2 { grid-template-columns: 1fr; } }
+
+  .card { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 14px; padding: 26px; }
+  .card .icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(124,92,255,0.12); color: var(--accent-2); margin-bottom: 16px; font-size: 1.1rem; }
+  .card h3 { margin: 0 0 8px; font-size: 1.05rem; }
+  .card p { margin: 0; color: var(--text-dim); font-size: 0.92rem; line-height: 1.6; }
+
+  .flow { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
+  .flow .node { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; font-family: var(--mono); font-size: 0.85rem; text-align: center; min-width: 140px; }
+  .flow .node b { display: block; color: var(--accent-2); margin-bottom: 4px; font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; }
+  .flow .arrow { color: var(--text-dim); font-size: 1.2rem; }
+
+  footer { border-top: 1px solid var(--border); padding: 40px 0 60px; text-align: center; color: var(--text-dim); font-size: 0.85rem; }
+  footer a { color: var(--text-dim); margin: 0 10px; }
+  footer a:hover { color: var(--text); }
+
+  code.inline { font-family: var(--mono); background: rgba(124,92,255,0.12); color: var(--accent-2); padding: 2px 6px; border-radius: 5px; font-size: 0.85em; }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+
+<header>
+  <nav>
+    <div class="brand"><span class="dot"></span> MemBridge</div>
+    <div class="links">
+      <a href="#how">How it works</a>
+      <a href="#security">Security</a>
+      <a href="#quickstart">Quickstart</a>
+    </div>
+    <a class="btn btn-primary" href="https://github.com/TidyMaze/membridge">GitHub →</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="pill">Built for the <b>MCP</b> era — works with Claude Code and Claude.ai</div>
+    <h1>One encrypted memory.<br><span class="grad">Everywhere Claude works.</span></h1>
+    <p class="sub">
+      MemBridge is a tiny self-hosted bridge that keeps your personal context — notes, decisions, rules —
+      in sync between your terminal and the browser, encrypted end-to-end, exposed to both sides as a
+      standard MCP server.
+    </p>
+    <div class="cta">
+      <a class="btn btn-primary" href="#quickstart">Get started</a>
+      <a class="btn btn-ghost" href="https://github.com/TidyMaze/membridge">View source</a>
+    </div>
+
+    <div class="term">
+      <div class="term-bar"><span></span><span></span><span></span></div>
+      <pre><span class="c1">$</span> claude mcp add --transport http membridge https://your-domain/mcp
+<span class="c1">$</span> memory push        <span class="c1"># from Claude Code, local CLI</span>
+<span class="c2">✓</span> context encrypted with age, synced.
+
+<span class="c1"># later, in Claude.ai web…</span>
+<span class="c3">&gt;</span> use membridge to add a note: "ship the v2 API by Friday"
+<span class="c2">✓</span> note added — visible next time Claude Code pulls.</pre>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="section-head">
+      <div class="tag">How it works</div>
+      <h2>Same context, two clients, zero copy-paste</h2>
+      <p>One ciphertext blob per user. Both Claude surfaces read and write it through the same MCP tools.</p>
+    </div>
+    <div class="flow">
+      <div class="node"><b>Local</b>Claude Code<br>CLI push / pull</div>
+      <div class="arrow">⇄</div>
+      <div class="node"><b>Server</b>MemBridge<br>Bun + Postgres</div>
+      <div class="arrow">⇄</div>
+      <div class="node"><b>Browser</b>Claude.ai<br>MCP tool calls</div>
+    </div>
+    <div class="grid3" style="margin-top:48px">
+      <div class="card">
+        <div class="icon">①</div>
+        <h3>Sign in with GitHub</h3>
+        <p>OAuth login issues a scoped API key. No passwords, no separate account system.</p>
+      </div>
+      <div class="card">
+        <div class="icon">②</div>
+        <h3>Encrypt locally with age</h3>
+        <p>Your context is encrypted client-side before it ever leaves your machine or browser tool call.</p>
+      </div>
+      <div class="card">
+        <div class="icon">③</div>
+        <h3>Sync through one tiny API</h3>
+        <p>A single ciphertext row per user. <code class="inline">push</code>/<code class="inline">pull</code> from the CLI, <code class="inline">get_context</code>/<code class="inline">add_note</code>/<code class="inline">search</code> from MCP.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="security">
+    <div class="section-head">
+      <div class="tag">Security model</div>
+      <h2>Encrypted at rest. Standards-based in transit.</h2>
+      <p>No custom auth scheme to audit — OAuth 2.1, PKCE, and dynamic client registration, all over TLS.</p>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h3>🔐 age encryption</h3>
+        <p>Context is stored as ciphertext only. Decryption requires your age secret key, passed as a tool
+        argument over TLS at call time — never persisted server-side.</p>
+      </div>
+      <div class="card">
+        <h3>🪪 GitHub OAuth + API keys</h3>
+        <p>Identity comes from GitHub. API keys are sha256-hashed at rest; the raw key is shown exactly once.</p>
+      </div>
+      <div class="card">
+        <h3>🔁 OAuth 2.1 + PKCE for MCP</h3>
+        <p>Claude Code and Claude.ai authorize via standard dynamic client registration and PKCE — no
+        manually-managed client secrets.</p>
+      </div>
+      <div class="card">
+        <h3>🚧 Rate limited</h3>
+        <p>Per-user sliding window rate limiting protects the API from runaway clients.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="quickstart">
+    <div class="section-head">
+      <div class="tag">Quickstart</div>
+      <h2>Self-host it in one <code class="inline">docker compose up</code></h2>
+      <p>MemBridge is a Bun + Hono app with one Postgres dependency. No managed services required.</p>
+    </div>
+    <div class="term">
+      <div class="term-bar"><span></span><span></span><span></span></div>
+      <pre><span class="c1">$</span> git clone https://github.com/TidyMaze/membridge && cd membridge
+<span class="c1">$</span> cp .env.example .env   <span class="c1"># set GH_CLIENT_ID / SECRET / BASE_URL</span>
+<span class="c1">$</span> docker compose up -d --build
+<span class="c2">✓</span> http://localhost:3000/health → {"ok":true}
+
+<span class="c1"># put a reverse proxy with automatic HTTPS (e.g. Caddy) in front,</span>
+<span class="c1"># point it at the app container, and you're done.</span></pre>
+    </div>
+  </section>
+</main>
+
+<footer>
+  MemBridge — built with Bun, Hono, Postgres, age, and MCP.
+  <div>
+    <a href="https://github.com/TidyMaze/membridge">GitHub</a>
+    <a href="https://github.com/TidyMaze/membridge/blob/main/DEPLOYMENT.md">Deployment guide</a>
+  </div>
+</footer>
+
+</body>
+</html>
