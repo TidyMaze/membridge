@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MemBridge — one encrypted memory, everywhere Claude works</title>
-<meta name="description" content="MemBridge syncs an end-to-end encrypted memory file between Claude Code and Claude.ai over MCP, with GitHub OAuth and OAuth 2.1 PKCE.">
+<meta name="description" content="MemBridge syncs an encrypted memory file between Claude Code and Claude.ai over MCP, with GitHub OAuth and OAuth 2.1 PKCE.">
 <style>
   :root {
     --bg: #0b0d10;
@@ -108,7 +108,7 @@
     <h1>One encrypted memory.<br><span class="grad">Everywhere Claude works.</span></h1>
     <p class="sub">
       MemBridge is a tiny self-hosted bridge that keeps your personal context — notes, decisions, rules —
-      in sync between your terminal and the browser, encrypted end-to-end, exposed to both sides as a
+      in sync between your terminal and the browser. Stored as ciphertext, exposed to both sides as a
       standard MCP server.
     </p>
     <div class="cta">
@@ -149,8 +149,10 @@
       </div>
       <div class="card">
         <div class="icon">②</div>
-        <h3>Encrypt locally with age</h3>
-        <p>Your context is encrypted client-side before it ever leaves your machine or browser tool call.</p>
+        <h3>Encrypted with age</h3>
+        <p>The CLI encrypts fully client-side — your key never leaves your machine. MCP tool calls (from
+        Claude Code or Claude.ai) send the key over TLS so the server can decrypt on your behalf — not
+        zero-knowledge, but never persisted.</p>
       </div>
       <div class="card">
         <div class="icon">③</div>
@@ -169,8 +171,10 @@
     <div class="grid2">
       <div class="card">
         <h3>🔐 age encryption</h3>
-        <p>Context is stored as ciphertext only. Decryption requires your age secret key, passed as a tool
-        argument over TLS at call time — never persisted server-side.</p>
+        <p>Context is stored as ciphertext only. The CLI's <code class="inline">push</code>/<code class="inline">pull</code>
+        are end-to-end — the server never sees your key. MCP tool calls pass the key as an argument over TLS
+        so the server can decrypt on your behalf (necessary for Claude.ai web, which has no local crypto) —
+        never persisted, but not zero-knowledge.</p>
       </div>
       <div class="card">
         <h3>🪪 GitHub OAuth + API keys</h3>
