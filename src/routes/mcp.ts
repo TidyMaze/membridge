@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { sql } from "../db/client";
 
 export const mcp = new Hono();
@@ -115,9 +115,16 @@ function rpcError(id: unknown, code: number, message: string) {
   return { jsonrpc: "2.0", id, error: { code, message } };
 }
 
+function unauthorized(c: Context) {
+  const resourceMetadataUrl = `${process.env.BASE_URL}/.well-known/oauth-protected-resource`;
+  return c.json({ error: "unauthorized" }, 401, {
+    "WWW-Authenticate": `Bearer resource_metadata="${resourceMetadataUrl}"`,
+  });
+}
+
 mcp.get("/mcp", (c) => {
   const header = c.req.header("Authorization") ?? "";
-  if (!header.startsWith("Bearer ")) return c.json({ error: "unauthorized" }, 401);
+  if (!header.startsWith("Bearer ")) return unauthorized(c);
 
   const stream = new ReadableStream({
     start(controller) {
@@ -132,12 +139,12 @@ mcp.get("/mcp", (c) => {
 mcp.post("/mcp", async (c) => {
   const header = c.req.header("Authorization") ?? "";
   const ageKey = c.req.header("X-Age-Key");
-  if (!header.startsWith("Bearer ")) return c.json({ error: "unauthorized" }, 401);
+  if (!header.startsWith("Bearer ")) return unauthorized(c);
 
   const rawKey = header.slice("Bearer ".length);
   const keyHash = await sha256Hex(rawKey);
   const [row] = await sql`SELECT user_id FROM api_keys WHERE key_hash = ${keyHash} LIMIT 1`;
-  if (!row) return c.json({ error: "unauthorized" }, 401);
+  if (!row) return unauthorized(c);
   const userId = row.user_id;
 
   const body = await c.req.json();
