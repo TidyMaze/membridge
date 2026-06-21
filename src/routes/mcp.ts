@@ -171,7 +171,23 @@ mcp.post("/mcp", async (c) => {
     if (method === "tools/call") {
       if (!ageKey) {
         return c.json(
-          rpcError(id, -32001, "missing X-Age-Key header: configure your MCP client to send your age secret key for decryption"),
+          rpcResult(id, {
+            isError: true,
+            content: [
+              {
+                type: "text",
+                text:
+                  "membridge can't decrypt your context yet: this client didn't send the X-Age-Key header.\n\n" +
+                  "This server end-to-end encrypts your data, so it needs your age secret key on every tool call. " +
+                  "Most MCP clients (including this one) don't support attaching custom headers via OAuth, so this " +
+                  "isn't something you can fix from this chat.\n\n" +
+                  "Workaround for Claude Code: reconnect with a static header:\n" +
+                  "  claude mcp remove membridge\n" +
+                  "  claude mcp add --transport http membridge https://membridge.yaro.fr/mcp --header \"X-Age-Key: <your age secret key>\"\n\n" +
+                  "There's currently no equivalent for Claude.ai web — ask the membridge operator about adding key storage support.",
+              },
+            ],
+          }),
         );
       }
       const text = await callTool(userId, ageKey, params.name, params.arguments ?? {});
