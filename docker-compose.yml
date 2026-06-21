@@ -1,0 +1,32 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    networks: [caddy, internal]
+    labels:
+      caddy: yourdomain.com
+      caddy.reverse_proxy: "{{upstreams 3000}}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: .env
+    volumes: [pgdata:/var/lib/postgresql/data]
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+
+networks:
+  caddy:
+    external: true
+  internal:
+
+volumes:
+  pgdata:
