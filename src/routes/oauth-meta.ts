@@ -36,11 +36,35 @@ oauthMeta.get("/.well-known/oauth-authorization-server", (c) => {
     issuer: base,
     authorization_endpoint: `${base}/oauth/authorize`,
     token_endpoint: `${base}/oauth/token`,
+    registration_endpoint: `${base}/oauth/register`,
     response_types_supported: ["code"],
     grant_types_supported: ["authorization_code"],
     code_challenge_methods_supported: ["S256"],
     token_endpoint_auth_methods_supported: ["none"],
   });
+});
+
+oauthMeta.post("/oauth/register", async (c) => {
+  const body = await c.req.json().catch(() => ({}) as Record<string, unknown>);
+  const redirectUris = Array.isArray(body.redirect_uris) ? body.redirect_uris : [];
+
+  const clientId = randomHex(16);
+  await sql`
+    INSERT INTO oauth_clients (client_id, client_name, redirect_uris)
+    VALUES (${clientId}, ${String(body.client_name ?? "")}, ${JSON.stringify(redirectUris)})
+  `;
+
+  return c.json(
+    {
+      client_id: clientId,
+      client_name: body.client_name ?? "",
+      redirect_uris: redirectUris,
+      token_endpoint_auth_method: "none",
+      grant_types: ["authorization_code"],
+      response_types: ["code"],
+    },
+    201,
+  );
 });
 
 oauthMeta.get("/oauth/authorize", (c) => {

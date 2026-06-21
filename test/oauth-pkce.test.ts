@@ -23,6 +23,19 @@ describe("D5: OAuth 2.1 PKCE for MCP", () => {
     expect(res2.status).toBe(200);
   });
 
+  test("dynamic client registration issues a client_id", async () => {
+    const res = await app.request("/oauth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_name: "claude-code", redirect_uris: ["http://localhost:1234/cb"] }),
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.client_id).toBeTruthy();
+    expect(body.redirect_uris).toEqual(["http://localhost:1234/cb"]);
+    expect(body.token_endpoint_auth_method).toBe("none");
+  });
+
   test("authorize rejects missing PKCE params", async () => {
     const res = await app.request("/oauth/authorize?client_id=x&redirect_uri=http://x/cb");
     expect(res.status).toBe(400);

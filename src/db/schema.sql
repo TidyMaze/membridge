@@ -44,5 +44,12 @@ CREATE TABLE IF NOT EXISTS oauth_codes (
   created_at            TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS oauth_clients (
+  client_id     TEXT PRIMARY KEY,
+  client_name   TEXT,
+  redirect_uris JSONB NOT NULL DEFAULT '[]',
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
 CREATE INDEX IF NOT EXISTS idx_rate_limits_user ON rate_limits(user_id, window_start);
