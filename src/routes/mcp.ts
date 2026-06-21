@@ -150,6 +150,9 @@ mcp.post("/mcp", async (c) => {
   const body = await c.req.json();
   const { id, method, params } = body;
 
+  // Notifications (no id) expect no JSON-RPC response body.
+  if (id === undefined) return c.body(null, 202);
+
   try {
     if (method === "initialize") {
       return c.json(
@@ -166,13 +169,20 @@ mcp.post("/mcp", async (c) => {
     }
 
     if (method === "tools/call") {
-      if (!ageKey) return c.json(rpcError(id, -32001, "missing X-Age-Key header: configure your MCP client to send your age secret key for decryption"), 401);
+      if (!ageKey) {
+        return c.json(
+          rpcError(id, -32001, "missing X-Age-Key header: configure your MCP client to send your age secret key for decryption"),
+        );
+      }
       const text = await callTool(userId, ageKey, params.name, params.arguments ?? {});
       return c.json(rpcResult(id, { content: [{ type: "text", text }] }));
     }
 
-    return c.json(rpcError(id, -32601, `method not found: ${method}`), 400);
+    if (method === "resources/list") return c.json(rpcResult(id, { resources: [] }));
+    if (method === "prompts/list") return c.json(rpcResult(id, { prompts: [] }));
+
+    return c.json(rpcError(id, -32601, `method not found: ${method}`));
   } catch (err) {
-    return c.json(rpcError(id, -32000, (err as Error).message), 500);
+    return c.json(rpcError(id, -32000, (err as Error).message));
   }
 });
