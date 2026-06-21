@@ -4,6 +4,9 @@
 
 Encrypted memory bridge between Claude Code (local) and Claude.ai (web), exposed as an MCP server.
 
+Open source and self-hostable — or skip the setup and use the **free hosted instance** at
+[membridge.yaro.fr](https://membridge.yaro.fr/auth/github) (sign in with GitHub, no credit card, no setup).
+
 The bash CLI (`push`/`pull`) is genuinely end-to-end encrypted — your age key never leaves your machine.
 MCP tool calls (used by both Claude Code and Claude.ai web) send the key as a call argument over TLS so the
 server can decrypt on your behalf; this is necessary because Claude.ai web has no local shell to run `age`
@@ -16,6 +19,10 @@ itself. The key is never persisted server-side, but for MCP calls it is *not* ze
 - 📋 Full spec: [CLAUDE.md](./CLAUDE.md)
 
 ## Quickstart
+
+**Hosted (no setup):** sign in at https://membridge.yaro.fr/auth/github and you're done.
+
+**Self-host:**
 
 ```bash
 cp .env.example .env   # set GH_CLIENT_ID / GH_CLIENT_SECRET / BASE_URL
