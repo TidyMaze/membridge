@@ -117,7 +117,7 @@ function rpcError(id: unknown, code: number, message: string) {
 
 mcp.get("/mcp", (c) => {
   const header = c.req.header("Authorization") ?? "";
-  if (!header.startsWith("Bearer ") || !c.req.header("X-Age-Key")) return c.json({ error: "unauthorized" }, 401);
+  if (!header.startsWith("Bearer ")) return c.json({ error: "unauthorized" }, 401);
 
   const stream = new ReadableStream({
     start(controller) {
@@ -132,7 +132,7 @@ mcp.get("/mcp", (c) => {
 mcp.post("/mcp", async (c) => {
   const header = c.req.header("Authorization") ?? "";
   const ageKey = c.req.header("X-Age-Key");
-  if (!header.startsWith("Bearer ") || !ageKey) return c.json({ error: "unauthorized" }, 401);
+  if (!header.startsWith("Bearer ")) return c.json({ error: "unauthorized" }, 401);
 
   const rawKey = header.slice("Bearer ".length);
   const keyHash = await sha256Hex(rawKey);
@@ -159,6 +159,7 @@ mcp.post("/mcp", async (c) => {
     }
 
     if (method === "tools/call") {
+      if (!ageKey) return c.json(rpcError(id, -32001, "missing X-Age-Key header: configure your MCP client to send your age secret key for decryption"), 401);
       const text = await callTool(userId, ageKey, params.name, params.arguments ?? {});
       return c.json(rpcResult(id, { content: [{ type: "text", text }] }));
     }
