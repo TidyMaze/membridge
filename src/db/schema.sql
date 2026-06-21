@@ -51,5 +51,16 @@ CREATE TABLE IF NOT EXISTS oauth_clients (
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS mcp_authorize_requests (
+  id                    TEXT PRIMARY KEY,
+  client_id             TEXT NOT NULL,
+  redirect_uri          TEXT NOT NULL,
+  mcp_state             TEXT,
+  code_challenge        TEXT NOT NULL,
+  code_challenge_method TEXT NOT NULL,
+  expires_at            TIMESTAMPTZ NOT NULL,
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
 CREATE INDEX IF NOT EXISTS idx_rate_limits_user ON rate_limits(user_id, window_start);

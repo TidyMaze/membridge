@@ -36,6 +36,23 @@ describe("D5: OAuth 2.1 PKCE for MCP", () => {
     expect(body.token_endpoint_auth_method).toBe("none");
   });
 
+  test("authorize page offers a passwordless Continue with GitHub link", async () => {
+    const challenge = base64UrlSha256("verifier-for-github-login");
+    const res = await app.request(
+      `/oauth/authorize?client_id=x&redirect_uri=${encodeURIComponent("http://localhost:9999/cb")}&state=abc&code_challenge=${challenge}&code_challenge_method=S256`,
+    );
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    expect(html).toContain("/auth/github?continuation=");
+
+    const continuationId = html.match(/\/auth\/github\?continuation=([a-f0-9]+)/)?.[1];
+    expect(continuationId).toBeTruthy();
+
+    const githubRes = await app.request(`/auth/github?continuation=${continuationId}`, { redirect: "manual" });
+    expect(githubRes.status).toBe(302);
+    expect(githubRes.headers.get("set-cookie")).toContain(`mcp_continuation=${continuationId}`);
+  });
+
   test("authorize rejects missing PKCE params", async () => {
     const res = await app.request("/oauth/authorize?client_id=x&redirect_uri=http://x/cb");
     expect(res.status).toBe(400);

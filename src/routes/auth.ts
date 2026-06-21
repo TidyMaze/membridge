@@ -17,6 +17,12 @@ async function sha256Hex(input: string) {
 auth.get("/auth/github", (c) => {
   const state = randomHex(16);
   setCookie(c, "oauth_state", state, { httpOnly: true, path: "/", maxAge: 600 });
+
+  const continuation = c.req.query("continuation");
+  if (continuation) {
+    setCookie(c, "mcp_continuation", continuation, { httpOnly: true, path: "/", maxAge: 600 });
+  }
+
   const url = new URL("https://github.com/login/oauth/authorize");
   url.searchParams.set("client_id", process.env.GH_CLIENT_ID!);
   url.searchParams.set("scope", "read:user user:email");
@@ -68,6 +74,29 @@ auth.get("/auth/callback", async (c) => {
   await sql`
     INSERT INTO api_keys (user_id, key_hash) VALUES (${user.id}, ${keyHash})
   `;
+
+  const continuationId = getCookie(c, "mcp_continuation");
+  if (continuationId) {
+    setCookie(c, "mcp_continuation", "", { httpOnly: true, path: "/", maxAge: 0 });
+
+    const [pending] = await sql`
+      SELECT * FROM mcp_authorize_requests WHERE id = ${continuationId} AND expires_at > NOW() LIMIT 1
+    `;
+    if (pending) {
+      await sql`DELETE FROM mcp_authorize_requests WHERE id = ${continuationId}`;
+
+      const authCode = randomHex(24);
+      await sql`
+        INSERT INTO oauth_codes (code, user_id, client_id, redirect_uri, code_challenge, code_challenge_method, expires_at)
+        VALUES (${authCode}, ${user.id}, ${pending.client_id}, ${pending.redirect_uri}, ${pending.code_challenge}, ${pending.code_challenge_method}, NOW() + INTERVAL '5 minutes')
+      `;
+
+      const redirect = new URL(pending.redirect_uri);
+      redirect.searchParams.set("code", authCode);
+      if (pending.mcp_state) redirect.searchParams.set("state", pending.mcp_state);
+      return c.redirect(redirect.toString());
+    }
+  }
 
   const doneUrl = new URL("/auth/done", process.env.BASE_URL);
   doneUrl.searchParams.set("key", rawKey);

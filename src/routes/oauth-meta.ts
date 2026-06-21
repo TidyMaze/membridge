@@ -67,15 +67,24 @@ oauthMeta.post("/oauth/register", async (c) => {
   );
 });
 
-oauthMeta.get("/oauth/authorize", (c) => {
+oauthMeta.get("/oauth/authorize", async (c) => {
   const { client_id, redirect_uri, state, code_challenge, code_challenge_method } = c.req.query();
   if (!client_id || !redirect_uri || !code_challenge || code_challenge_method !== "S256") {
     return c.json({ error: "invalid_request" }, 400);
   }
 
+  const continuationId = randomHex(16);
+  await sql`
+    INSERT INTO mcp_authorize_requests (id, client_id, redirect_uri, mcp_state, code_challenge, code_challenge_method, expires_at)
+    VALUES (${continuationId}, ${client_id}, ${redirect_uri}, ${state ?? null}, ${code_challenge}, ${code_challenge_method}, NOW() + INTERVAL '10 minutes')
+  `;
+  const githubUrl = `/auth/github?continuation=${continuationId}`;
+
   const html = `<!doctype html>
 <html><body>
 <h1>Authorize MemBridge access for ${escapeHtml(client_id)}</h1>
+<p><a href="${githubUrl}"><button type="button">Continue with GitHub</button></a></p>
+<p>Already have an API key?</p>
 <form method="POST" action="/oauth/authorize">
   <input type="hidden" name="client_id" value="${escapeHtml(client_id)}">
   <input type="hidden" name="redirect_uri" value="${escapeHtml(redirect_uri)}">
