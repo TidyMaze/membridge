@@ -18,7 +18,7 @@ app.use(
 );
 app.use(
   "/mcp",
-  cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["Content-Type", "Authorization", "X-Age-Key"] }),
+  cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["Content-Type", "Authorization"] }),
 );
 
 app.get("/health", (c) => c.json({ ok: true }));

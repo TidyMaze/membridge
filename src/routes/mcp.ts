@@ -50,21 +50,36 @@ async function ageEncrypt(plaintext: string, ageKey: string): Promise<Buffer> {
   }
 }
 
+const AGE_KEY_PROPERTY = {
+  age_key: {
+    type: "string",
+    description: "Your age secret key (AGE-SECRET-KEY-...), used to decrypt/encrypt your context. Never stored.",
+  },
+};
+
 const TOOLS = [
   {
     name: "get_context",
     description: "Returns the user's decrypted memory context as markdown",
-    inputSchema: { type: "object", properties: {} },
+    inputSchema: { type: "object", properties: { ...AGE_KEY_PROPERTY }, required: ["age_key"] },
   },
   {
     name: "add_note",
     description: "Appends a note to the ## Notes section and re-encrypts",
-    inputSchema: { type: "object", properties: { text: { type: "string" } }, required: ["text"] },
+    inputSchema: {
+      type: "object",
+      properties: { text: { type: "string" }, ...AGE_KEY_PROPERTY },
+      required: ["text", "age_key"],
+    },
   },
   {
     name: "search",
     description: "Search the decrypted context for a query string",
-    inputSchema: { type: "object", properties: { query: { type: "string" } }, required: ["query"] },
+    inputSchema: {
+      type: "object",
+      properties: { query: { type: "string" }, ...AGE_KEY_PROPERTY },
+      required: ["query", "age_key"],
+    },
   },
 ];
 
@@ -74,7 +89,10 @@ async function getContext(userId: string, ageKey: string): Promise<string> {
   return ageDecrypt(row.ciphertext, ageKey);
 }
 
-async function callTool(userId: string, ageKey: string, name: string, args: Record<string, unknown>) {
+async function callTool(userId: string, name: string, args: Record<string, unknown>) {
+  const ageKey = String(args.age_key ?? "");
+  if (!ageKey) throw new Error("missing required argument: age_key");
+
   if (name === "get_context") {
     return await getContext(userId, ageKey);
   }
@@ -138,7 +156,6 @@ mcp.get("/mcp", (c) => {
 
 mcp.post("/mcp", async (c) => {
   const header = c.req.header("Authorization") ?? "";
-  const ageKey = c.req.header("X-Age-Key");
   if (!header.startsWith("Bearer ")) return unauthorized(c);
 
   const rawKey = header.slice("Bearer ".length);
@@ -169,29 +186,12 @@ mcp.post("/mcp", async (c) => {
     }
 
     if (method === "tools/call") {
-      if (!ageKey) {
-        return c.json(
-          rpcResult(id, {
-            isError: true,
-            content: [
-              {
-                type: "text",
-                text:
-                  "membridge can't decrypt your context yet: this client didn't send the X-Age-Key header.\n\n" +
-                  "This server end-to-end encrypts your data, so it needs your age secret key on every tool call. " +
-                  "Most MCP clients (including this one) don't support attaching custom headers via OAuth, so this " +
-                  "isn't something you can fix from this chat.\n\n" +
-                  "Workaround for Claude Code: reconnect with a static header:\n" +
-                  "  claude mcp remove membridge\n" +
-                  "  claude mcp add --transport http membridge https://membridge.yaro.fr/mcp --header \"X-Age-Key: <your age secret key>\"\n\n" +
-                  "There's currently no equivalent for Claude.ai web — ask the membridge operator about adding key storage support.",
-              },
-            ],
-          }),
-        );
+      try {
+        const text = await callTool(userId, params.name, params.arguments ?? {});
+        return c.json(rpcResult(id, { content: [{ type: "text", text }] }));
+      } catch (toolErr) {
+        return c.json(rpcResult(id, { isError: true, content: [{ type: "text", text: (toolErr as Error).message }] }));
       }
-      const text = await callTool(userId, ageKey, params.name, params.arguments ?? {});
-      return c.json(rpcResult(id, { content: [{ type: "text", text }] }));
     }
 
     if (method === "resources/list") return c.json(rpcResult(id, { resources: [] }));
