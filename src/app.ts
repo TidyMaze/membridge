@@ -21,6 +21,7 @@ app.use(
   cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["Content-Type", "Authorization"] }),
 );
 
+app.get("/", (c) => c.redirect("https://tidymaze.github.io/membridge/", 302));
 app.get("/health", (c) => c.json({ ok: true }));
 app.route("/", auth);
 app.route("/", context);
