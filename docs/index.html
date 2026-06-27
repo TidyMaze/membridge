@@ -97,20 +97,9 @@
 
   /* Image handling */
   .illustration { margin: 0 auto; display: block; max-width: 100%; }
-  .illustration.hero-img {
-    max-width: min(560px, 100%); margin-bottom: 40px; border-radius: 16px;
-    clip-path: inset(0 0 38px 0 round 16px);
-  }
-  .illustration.framed { border-radius: 14px; border: 1px solid var(--border); background: var(--bg-soft); padding: 18px; }
-  .illustration.diagram-img {
-    max-width: min(640px, 100%); margin: 36px auto 0;
-    filter: invert(0.88) hue-rotate(185deg) saturate(0.9);
-    border-radius: 14px; border: 1px solid var(--border);
-  }
-  .illustration.split-img {
-    max-width: min(720px, 100%); margin: 36px auto 0;
-    clip-path: inset(0 0 62px 0 round 14px);
-  }
+  .illustration.hero-img  { max-width: min(560px, 100%); margin-bottom: 40px; border-radius: 16px; }
+  .illustration.diagram-img { max-width: min(640px, 100%); margin: 36px auto 0; border-radius: 14px; border: 1px solid var(--border); }
+  .illustration.split-img   { max-width: min(660px, 100%); margin: 36px auto 0; border-radius: 14px; border: 1px solid var(--border); }
   .illustration.stack-img { display: none; }
 
   /* Quickstart */
@@ -157,7 +146,7 @@
 
 <main>
   <section class="hero">
-    <img class="illustration hero-img" src="images/hero-two-surfaces-one-memory.png" alt="A laptop terminal and a browser chat window connected by a glowing encrypted link with a padlock at its center">
+    <img class="illustration hero-img" src="images/hero.svg" alt="A terminal window and a browser chat window connected through an encrypted MemBridge link">
     <div class="pill">Open source &amp; self-hostable — or use the free hosted instance</div>
     <h1>One encrypted memory.<br><span class="grad">Everywhere Claude works.</span></h1>
     <p class="sub">
@@ -194,11 +183,11 @@
     <div class="flow">
       <div class="node"><b>Local</b>Claude Code<br>CLI push / pull</div>
       <div class="arrow">⇄</div>
-      <div class="node"><b>Server</b>MemBridge<br>Bun + Postgres</div>
+      <div class="node"><b>Server</b>MemBridge<br>encrypted storage</div>
       <div class="arrow">⇄</div>
       <div class="node"><b>Browser</b>Claude.ai<br>MCP tool calls</div>
     </div>
-    <img class="illustration diagram-img" src="images/how-it-works-encrypt-bridge-decrypt.png" alt="Diagram: your device runs age encrypt, MemBridge stores ciphertext only, the other device runs age decrypt">
+    <img class="illustration diagram-img" src="images/diagram.svg" alt="Diagram: your device runs age encrypt, MemBridge stores ciphertext only, the other device runs age decrypt">
     <div class="grid3" style="margin-top:48px">
       <div class="card">
         <div class="icon">①</div>
@@ -238,7 +227,7 @@
       <h2>Encrypted at rest. Standards-based in transit.</h2>
       <p>No custom auth scheme to audit — OAuth 2.1, PKCE, and dynamic client registration, all over TLS.</p>
     </div>
-    <img class="illustration split-img framed" src="images/security-in-transit-at-rest.png" alt="Diagram: data shielded in a TLS tunnel while in transit, then stored as scrambled ciphertext in a database at rest">
+    <img class="illustration split-img" src="images/security.svg" alt="Diagram: data shielded in a TLS tunnel while in transit, then stored as scrambled ciphertext in a database at rest">
     <div class="grid2" style="margin-top:36px">
       <div class="card" style="grid-column: 1 / -1">
         <div class="icon">④</div>
@@ -276,8 +265,8 @@
     <div class="section-head">
       <div class="tag">Quickstart</div>
       <h2>Self-host it in one <code class="inline">docker compose up</code></h2>
-      <p>MemBridge is a Bun + Hono app with one Postgres dependency. No managed services required.
-      Don't want to run your own? <a href="https://membridge.yaro.fr/auth/github">use the free hosted instance</a> instead.</p>
+      <p>One server, one database, no managed services. Don't want to run your own?
+      <a href="https://membridge.yaro.fr/auth/github">use the free hosted instance</a> instead.</p>
     </div>
     <div class="quickstart-layout">
       <img class="illustration stack-img" src="images/quickstart-one-command-stack.png" alt="An arrow labeled with a dollar-sign terminal prompt dropping into a stacked server, gear, and shield, representing one command deploying the whole stack">
@@ -301,7 +290,7 @@
 </main>
 
 <footer>
-  MemBridge — built with Bun, Hono, Postgres, age, and MCP.
+  MemBridge — open source, self-hostable.
   <div style="margin-top:10px">
     <a href="https://github.com/TidyMaze/membridge">GitHub</a>
     <a href="https://github.com/TidyMaze/membridge/blob/main/DEPLOYMENT.md">Deployment guide</a>

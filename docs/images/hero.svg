@@ -1,0 +1,87 @@
+<svg viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg" fill="none">
+<defs>
+  <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#7c5cff" stop-opacity="0.2"/>
+    <stop offset="100%" stop-color="#7c5cff" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="arc" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#7c5cff"/>
+    <stop offset="100%" stop-color="#34e2c4"/>
+  </linearGradient>
+</defs>
+
+<!-- Background -->
+<rect width="600" height="320" rx="16" fill="#0c0e14" stroke="#1c2232" stroke-width="1.2"/>
+
+<!-- Center glow -->
+<circle cx="300" cy="145" r="80" fill="url(#glow)"/>
+
+<!-- ── LEFT WINDOW: Terminal ── -->
+<rect x="18" y="30" width="188" height="200" rx="10" fill="#0f1219" stroke="#242c38" stroke-width="1.2"/>
+<!-- Title bar -->
+<rect x="18" y="30" width="188" height="28" rx="10" fill="#141820"/>
+<rect x="18" y="46" width="188" height="12" fill="#141820"/>
+<circle cx="36" cy="44" r="5" fill="#ff5f57"/>
+<circle cx="51" cy="44" r="5" fill="#ffbd2e"/>
+<circle cx="66" cy="44" r="5" fill="#28c840"/>
+<!-- Code lines -->
+<text x="30" y="84"  font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#34e2c4">$</text>
+<rect x="44" y="76"  width="100" height="9" rx="2.5" fill="#1e2a3a"/>
+<rect x="44" y="76"  width="60"  height="9" rx="2.5" fill="#243040"/>
+<text x="30" y="103" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#34e2c4">$</text>
+<rect x="44" y="95"  width="84"  height="9" rx="2.5" fill="#1e2a3a"/>
+<rect x="44" y="95"  width="48"  height="9" rx="2.5" fill="#243040"/>
+<text x="30" y="122" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#28c840">✓</text>
+<rect x="44" y="114" width="130" height="9" rx="2.5" fill="#34e2c4" opacity="0.15"/>
+<text x="30" y="141" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#8b97a5">›</text>
+<rect x="44" y="133" width="112" height="9" rx="2.5" fill="#7c5cff" opacity="0.2"/>
+<text x="30" y="160" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#28c840">✓</text>
+<rect x="44" y="152" width="118" height="9" rx="2.5" fill="#34e2c4" opacity="0.15"/>
+<!-- Label below window -->
+<text x="112" y="246" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#8b97a5">Claude Code</text>
+
+<!-- ── RIGHT WINDOW: Chat ── -->
+<rect x="394" y="30" width="188" height="200" rx="10" fill="#0f1219" stroke="#242c38" stroke-width="1.2"/>
+<rect x="394" y="30" width="188" height="28" rx="10" fill="#141820"/>
+<rect x="394" y="46" width="188" height="12" fill="#141820"/>
+<circle cx="412" cy="44" r="5" fill="#ff5f57"/>
+<circle cx="427" cy="44" r="5" fill="#ffbd2e"/>
+<circle cx="442" cy="44" r="5" fill="#28c840"/>
+<!-- User bubble -->
+<rect x="406" y="66" width="148" height="36" rx="16" fill="#1a1f35" stroke="#7c5cff" stroke-width="1.2"/>
+<rect x="420" y="76"  width="80" height="8" rx="4" fill="#7c5cff" opacity="0.55"/>
+<rect x="420" y="88"  width="54" height="6" rx="3" fill="#7c5cff" opacity="0.28"/>
+<!-- Assistant bubble -->
+<rect x="424" y="113" width="148" height="40" rx="16" fill="#0e2420" stroke="#34e2c4" stroke-width="1.2"/>
+<rect x="438" y="123" width="88" height="8" rx="4" fill="#34e2c4" opacity="0.5"/>
+<rect x="438" y="135" width="60" height="6" rx="3" fill="#34e2c4" opacity="0.25"/>
+<!-- User bubble 2 -->
+<rect x="406" y="164" width="114" height="24" rx="12" fill="#1a1f35" stroke="#7c5cff" stroke-width="1" opacity="0.65"/>
+<rect x="420" y="172"  width="52" height="8" rx="4" fill="#7c5cff" opacity="0.35"/>
+<!-- Label below window -->
+<text x="488" y="246" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="11" fill="#8b97a5">Claude.ai</text>
+
+<!-- ── CENTER: Lock ── -->
+<circle cx="300" cy="145" r="42" fill="#0c0e14" stroke="#7c5cff" stroke-width="1.6" opacity="0.8"/>
+<circle cx="300" cy="145" r="56" stroke="#7c5cff" stroke-width="8"  opacity="0.05"/>
+<!-- Lock body -->
+<rect x="286" y="140" width="28" height="24" rx="6" fill="#7c5cff" opacity="0.9"/>
+<!-- Shackle -->
+<path d="M290 140 L290 130 C290 119 310 119 310 130 L310 140" stroke="#34e2c4" stroke-width="3" stroke-linecap="round"/>
+<!-- Keyhole -->
+<circle cx="300" cy="150" r="4.5" fill="#0c0e14" opacity="0.9"/>
+<rect x="298.5" y="153" width="3" height="7" rx="1.5" fill="#0c0e14" opacity="0.9"/>
+
+<!-- ── Connecting arcs ── -->
+<!-- Terminal → Lock top -->
+<path d="M208 90  C248 70  272 108 262 145" stroke="#7c5cff" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" opacity="0.75"/>
+<!-- Terminal → Lock bottom -->
+<path d="M262 145 C272 182 248 220 208 200" stroke="#34e2c4" stroke-width="1.5" stroke-dasharray="5 4" stroke-linecap="round" opacity="0.45"/>
+<!-- Lock → Chat top -->
+<path d="M338 145 C328 108 352 70 392 90"  stroke="#7c5cff" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" opacity="0.75"/>
+<!-- Lock → Chat bottom -->
+<path d="M392 200 C352 220 328 182 338 145" stroke="#34e2c4" stroke-width="1.5" stroke-dasharray="5 4" stroke-linecap="round" opacity="0.45"/>
+
+<!-- Center caption -->
+<text x="300" y="272" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10.5" fill="#7c5cff" opacity="0.75">age-encrypted</text>
+</svg>

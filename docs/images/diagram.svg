@@ -1,0 +1,85 @@
+<svg viewBox="0 0 680 240" xmlns="http://www.w3.org/2000/svg" fill="none">
+<defs>
+  <linearGradient id="arr1" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#34e2c4"/>
+    <stop offset="100%" stop-color="#7c5cff"/>
+  </linearGradient>
+  <linearGradient id="arr2" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#7c5cff"/>
+    <stop offset="100%" stop-color="#34e2c4"/>
+  </linearGradient>
+</defs>
+
+<!-- Background -->
+<rect width="680" height="240" rx="14" fill="#0c0e14" stroke="#1a2030" stroke-width="1.2"/>
+
+<!-- ── LEFT BOX: Your device ── -->
+<rect x="16" y="16" width="188" height="164" rx="10" fill="#0f1219" stroke="#242c38" stroke-width="1.2"/>
+<!-- Header -->
+<rect x="16" y="16" width="188" height="28" rx="10" fill="#141820"/>
+<rect x="16" y="32"  width="188" height="12" fill="#141820"/>
+<text x="110" y="36" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="9.5" letter-spacing="0.06em" fill="#8b97a5">YOUR DEVICE</text>
+<!-- Key icon: circle head + rectangular shaft + teeth -->
+<circle cx="76" cy="98" r="18" stroke="#34e2c4" stroke-width="2" fill="none" opacity="0.85"/>
+<circle cx="76" cy="98" r="7"  fill="#34e2c4" opacity="0.2"/>
+<rect x="93"  y="96" width="30" height="4" rx="2" fill="#34e2c4" opacity="0.8"/>
+<rect x="116" y="100" width="7" height="5" rx="1.5" fill="#34e2c4" opacity="0.8"/>
+<rect x="107" y="100" width="6" height="5" rx="1.5" fill="#34e2c4" opacity="0.8"/>
+<!-- Terminal lines -->
+<rect x="28" y="130" width="10" height="8" rx="1.5" fill="#34e2c4" opacity="0.6"/>
+<rect x="44" y="130" width="88" height="8" rx="2" fill="#1e2a3a"/>
+<rect x="44" y="130" width="52" height="8" rx="2" fill="#243040"/>
+<rect x="28" y="146" width="10" height="8" rx="1.5" fill="#34e2c4" opacity="0.6"/>
+<rect x="44" y="146" width="72" height="8" rx="2" fill="#1e2a3a"/>
+<rect x="44" y="146" width="40" height="8" rx="2" fill="#243040"/>
+<!-- Caption below box -->
+<text x="110" y="202" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#34e2c4">age encrypt</text>
+
+<!-- ── ARROW 1 ── -->
+<line x1="206" y1="98" x2="240" y2="98" stroke="url(#arr1)" stroke-width="2" opacity="0.8"/>
+<polygon points="234,92 244,98 234,104" fill="#7c5cff" opacity="0.85"/>
+<text x="223" y="88" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="8" fill="#8b97a5">push</text>
+
+<!-- ── CENTER BOX: MemBridge ── -->
+<rect x="248" y="16" width="184" height="164" rx="10" fill="#0f1219" stroke="#7c5cff" stroke-width="1.4" opacity="0.7"/>
+<rect x="248" y="16" width="184" height="28" rx="10" fill="#14182a"/>
+<rect x="248" y="32"  width="184" height="12" fill="#14182a"/>
+<text x="340" y="36" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="9.5" letter-spacing="0.06em" fill="#7c5cff">MEMBRIDGE</text>
+<!-- Database cylinder -->
+<rect x="303" y="82" width="74" height="52" fill="#12152a"/>
+<line x1="303" y1="82" x2="303" y2="134" stroke="#7c5cff" stroke-width="1.4" opacity="0.6"/>
+<line x1="377" y1="82" x2="377" y2="134" stroke="#7c5cff" stroke-width="1.4" opacity="0.6"/>
+<ellipse cx="340" cy="134" rx="37" ry="10" fill="#12152a" stroke="#7c5cff" stroke-width="1.4" opacity="0.6"/>
+<ellipse cx="340" cy="82"  rx="37" ry="10" fill="#12152a" stroke="#7c5cff" stroke-width="1.4" opacity="0.85"/>
+<!-- Hex data (below top ellipse rim at y≈92) -->
+<text x="313" y="103" font-family="monospace" font-size="7.5" fill="#7c5cff" opacity="0.5">a9f2·c3e1</text>
+<text x="315" y="116" font-family="monospace" font-size="7.5" fill="#7c5cff" opacity="0.3">4b7d·88f0</text>
+<text x="313" y="129" font-family="monospace" font-size="7.5" fill="#7c5cff" opacity="0.5">e03c·1a59</text>
+<!-- Caption below box -->
+<text x="340" y="202" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#7c5cff">ciphertext only</text>
+
+<!-- ── ARROW 2 ── -->
+<line x1="434" y1="98" x2="468" y2="98" stroke="url(#arr2)" stroke-width="2" opacity="0.8"/>
+<polygon points="462,92 472,98 462,104" fill="#34e2c4" opacity="0.85"/>
+<text x="451" y="88" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="8" fill="#8b97a5">pull</text>
+
+<!-- ── RIGHT BOX: Other device ── -->
+<rect x="476" y="16" width="188" height="164" rx="10" fill="#0f1219" stroke="#242c38" stroke-width="1.2"/>
+<rect x="476" y="16" width="188" height="28" rx="10" fill="#141820"/>
+<rect x="476" y="32"  width="188" height="12" fill="#141820"/>
+<text x="570" y="36" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="9.5" letter-spacing="0.06em" fill="#8b97a5">OTHER DEVICE</text>
+<!-- Unlocked padlock -->
+<rect x="552" y="90" width="24" height="20" rx="5" fill="#34e2c4" fill-opacity="0.12" stroke="#34e2c4" stroke-width="1.8"/>
+<path d="M556 90 L556 80 C556 70 572 70 572 80" stroke="#34e2c4" stroke-width="2.2" stroke-linecap="round" fill="none" opacity="0.6"/>
+<circle cx="564" cy="100" r="3.5" fill="#34e2c4" opacity="0.65"/>
+<rect x="562.5" y="102" width="3" height="5" rx="1.5" fill="#34e2c4" opacity="0.65"/>
+<!-- Terminal lines -->
+<rect x="488" y="130" width="10" height="8" rx="1.5" fill="#34e2c4" opacity="0.6"/>
+<rect x="504" y="130" width="88" height="8" rx="2" fill="#1e2a3a"/>
+<rect x="504" y="130" width="52" height="8" rx="2" fill="#243040"/>
+<rect x="488" y="146" width="10" height="8" rx="1.5" fill="#34e2c4" opacity="0.6"/>
+<rect x="504" y="146" width="64" height="8" rx="2" fill="#1e2a3a"/>
+<rect x="504" y="146" width="36" height="8" rx="2" fill="#243040"/>
+<!-- Caption below box -->
+<text x="570" y="202" text-anchor="middle" font-family="'SF Mono',Menlo,monospace" font-size="10" fill="#34e2c4">age decrypt</text>
+</svg>
