@@ -9,6 +9,7 @@ services:
     labels:
       caddy: yourdomain.com
       caddy.reverse_proxy: "{{upstreams 3000}}"
+      com.centurylinklabs.watchtower.enable: "true"
     depends_on:
       postgres:
         condition: service_healthy
@@ -31,7 +32,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /root/.docker/config.json:/config.json
-    command: --interval 300 --cleanup
+    command: --interval 300 --cleanup --label-enable
 
 networks:
   caddy:
