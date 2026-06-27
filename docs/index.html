@@ -131,11 +131,18 @@
 
     <div class="term">
       <div class="term-bar"><span></span><span></span><span></span></div>
-      <pre><span class="c1">$</span> claude mcp add --transport http membridge https://membridge.yaro.fr/mcp
-<span class="c1">$</span> memory push        <span class="c1"># from Claude Code, local CLI</span>
+      <pre><span class="c1"># 1. install the CLI (bash + age only, no npm)</span>
+<span class="c1">$</span> ln -sf "$(pwd)/cli/memory.sh" ~/bin/memory
+<span class="c1">$</span> memory configure mem_&lt;your-key&gt;
+
+<span class="c1"># 2. connect Claude Code to the MCP server</span>
+<span class="c1">$</span> claude mcp add --transport http membridge https://membridge.yaro.fr/mcp
+
+<span class="c1"># 3. push local context (or let the Stop hook do it automatically)</span>
+<span class="c1">$</span> memory push
 <span class="c2">✓</span> context encrypted with age, synced.
 
-<span class="c1"># later, in Claude.ai web…</span>
+<span class="c1"># later, in Claude.ai web or Claude Code…</span>
 <span class="c3">&gt;</span> use membridge to add a note: "ship the v2 API by Friday"
 <span class="c2">✓</span> note added — visible next time Claude Code pulls.</pre>
     </div>
@@ -174,6 +181,13 @@
         <p>A single ciphertext row per user. <code class="inline">push</code>/<code class="inline">pull</code> from the CLI, <code class="inline">get_context</code>/<code class="inline">add_note</code>/<code class="inline">search</code> from MCP.</p>
       </div>
     </div>
+
+    <div class="card" style="margin-top:24px">
+      <h3>⚡ Auto-push with a Claude Code Stop hook</h3>
+      <p>Add one line to <code class="inline">~/.claude/settings.json</code> and your context is pushed silently every time a Claude Code session ends — no manual <code class="inline">memory push</code> required:</p>
+      <pre style="margin:14px 0 0; font-family:var(--mono); font-size:0.82rem; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:14px; overflow-x:auto; color:#c9d4de">{"hooks": {"Stop": [{"hooks": [{"type": "command",
+  "command": "memory push --silent 2>/dev/null || true"}]}]}}</pre>
+    </div>
   </section>
 
   <section id="security">
@@ -189,7 +203,8 @@
         <p>Context is stored as ciphertext only. The CLI's <code class="inline">push</code>/<code class="inline">pull</code>
         are end-to-end — the server never sees your key. MCP tool calls pass the key as an argument over TLS
         so the server can decrypt on your behalf (necessary for Claude.ai web, which has no local crypto) —
-        never persisted, but not zero-knowledge.</p>
+        never persisted, but not zero-knowledge. MCP tools work in interactive Claude Code sessions;
+        non-interactive subprocesses (<code class="inline">claude -p</code>) do not inherit MCP auth.</p>
       </div>
       <div class="card">
         <h3>🪪 GitHub OAuth + API keys</h3>
@@ -226,8 +241,10 @@
 <span class="c1">$</span> docker compose up -d --build
 <span class="c2">✓</span> http://localhost:3000/health → {"ok":true}
 
-<span class="c1"># put a reverse proxy with automatic HTTPS (e.g. Caddy) in front,</span>
-<span class="c1"># point it at the app container, and you're done.</span></pre>
+<span class="c1"># install the CLI, configure, connect Claude Code</span>
+<span class="c1">$</span> ln -sf "$(pwd)/cli/memory.sh" ~/bin/memory
+<span class="c1">$</span> memory configure mem_&lt;key-from-/auth/done&gt;
+<span class="c1">$</span> claude mcp add --transport http membridge https://your-domain.com/mcp</pre>
       </div>
     </div>
   </section>

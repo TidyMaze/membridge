@@ -5,6 +5,12 @@ CONFIG_DIR="$HOME/.memory"
 CONFIG_FILE="$CONFIG_DIR/config"
 LOCAL_FILE="$CONFIG_DIR/context.md"
 AGE_KEY_FILE="$CONFIG_DIR/key.txt"
+SILENT=0
+
+# Parse --silent flag before the subcommand
+for arg in "$@"; do
+  [ "$arg" = "--silent" ] && SILENT=1
+done
 
 mkdir -p "$CONFIG_DIR"
 
@@ -52,7 +58,7 @@ cmd_push() {
   age -r "$pubkey" "$LOCAL_FILE" | curl -sf -X POST \
     -H "Authorization: Bearer $MEMORY_KEY" \
     --data-binary @- "$MEMORY_ENDPOINT/api/context" > /dev/null
-  echo "Pushed."
+  if [ "$SILENT" -eq 0 ]; then echo "Pushed."; fi
 }
 
 cmd_pull() {
@@ -92,6 +98,7 @@ case "${1:-}" in
   pull)      cmd_pull ;;
   edit)      cmd_edit ;;
   status)    cmd_status ;;
+  --silent)  ;; # consumed above
   *)
     echo "Usage: memory {configure <key>|login|push|pull|edit|status}" >&2
     exit 1
