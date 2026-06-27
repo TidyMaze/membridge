@@ -26,7 +26,7 @@ app.use(
 app.use("/mcp", authMiddleware, rateLimitMiddleware);
 
 app.get("/", (c) => c.redirect("https://tidymaze.github.io/membridge/", 302));
-app.get("/health", (c) => c.json({ ok: true }));
+app.get("/health", (c) => c.json({ ok: true, deployment: "automated-registry-flow-v1" }));
 app.get("/install", async (c) => {
   const script = await Bun.file(new URL("../cli/install.sh", import.meta.url)).text();
   return c.text(script, 200, { "Content-Type": "text/plain; charset=utf-8" });
