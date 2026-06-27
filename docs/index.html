@@ -111,11 +111,11 @@
     max-width: min(720px, 100%); margin: 36px auto 0;
     clip-path: inset(0 0 62px 0 round 14px);
   }
-  .illustration.stack-img { max-width: min(200px, 100%); border-radius: 14px; clip-path: inset(0 0 32px 0 round 14px); }
+  .illustration.stack-img { display: none; }
 
   /* Quickstart */
-  .quickstart-layout { display: flex; align-items: center; gap: 32px; justify-content: center; flex-wrap: wrap; }
-  .quickstart-layout .term { margin: 0; }
+  .quickstart-layout { display: flex; justify-content: center; }
+  .quickstart-layout .term { margin: 0; max-width: 720px; width: 100%; }
 
   footer { border-top: 1px solid var(--border); padding: 40px 0 60px; text-align: center; color: var(--text-dim); font-size: 0.85rem; }
   footer a { color: var(--text-dim); margin: 0 14px; padding: 8px 0; display: inline-block; }
@@ -128,11 +128,15 @@
     .hero { padding: 50px 0 36px; }
     .sub { font-size: 1rem; }
     .section-head h2 { font-size: 1.5rem; }
+    .term { overflow-x: auto; }
     .term pre { font-size: 0.76rem; padding: 14px 16px; }
     .card pre { font-size: 0.74rem !important; padding: 10px 12px !important; }
     .quickstart-layout { flex-direction: column; }
     .illustration.stack-img { display: none; }
     footer a { margin: 0 8px; }
+    .flow { flex-direction: column; align-items: center; }
+    .flow .node { width: 100%; max-width: 300px; }
+    .flow .arrow { transform: rotate(90deg); padding: 2px 0; }
   }
 </style>
 </head>
