@@ -138,6 +138,11 @@
 </style>
 </head>
 <body>
+<div id="wip-banner" style="position:sticky;top:0;z-index:100;background:rgba(232,199,106,0.1);border-bottom:1px solid rgba(232,199,106,0.3);padding:8px 16px;text-align:center;font-size:0.8rem;color:#e8c76a;display:flex;align-items:center;justify-content:center;gap:12px">
+  <span>&#9888; Work in progress — not stable, not production-safe, built actively. Use at your own risk.</span>
+  <button onclick="document.getElementById('wip-banner').style.display='none';localStorage.setItem('wip-dismissed','1')" style="background:none;border:1px solid rgba(232,199,106,0.4);border-radius:4px;color:#e8c76a;font-size:0.75rem;padding:2px 8px;cursor:pointer;flex-shrink:0">dismiss</button>
+</div>
+<script>if(localStorage.getItem('wip-dismissed')==='1')document.getElementById('wip-banner').style.display='none';</script>
 <div class="glow"></div>
 
 <header>
@@ -172,7 +177,9 @@
         <div class="dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
         <button class="copy-btn" onclick="copyTerm(this)">copy</button>
       </div>
-      <pre><span class="c1">$</span> memb configure mem_YOUR_KEY   <span class="c1"># after signing in</span>
+      <pre><span class="c1"># install memb CLI</span>
+<span class="c1">$</span> curl -fsSL https://membridge.yaro.fr/install | bash
+<span class="c1">$</span> memb configure mem_YOUR_KEY   <span class="c1"># after signing in</span>
 <span class="c1">$</span> claude mcp add --transport http membridge https://membridge.yaro.fr/mcp
 <span class="c1">$</span> memb push
 <span class="c2">✓</span> context encrypted and synced.
@@ -288,8 +295,8 @@
 <span class="c1">$</span> docker compose up -d --build
 <span class="c2">✓</span> http://localhost:3000/health → {"ok":true}
 
-<span class="c1"># install the CLI and connect Claude Code</span>
-<span class="c1">$</span> ln -sf "$(pwd)/cli/memb.sh" ~/bin/memb
+<span class="c1"># install the CLI</span>
+<span class="c1">$</span> curl -fsSL https://your-domain.com/install | bash
 <span class="c1">$</span> memb configure mem_YOUR_KEY
 <span class="c1">$</span> claude mcp add --transport http membridge https://your-domain.com/mcp</pre>
       </div>

@@ -35,8 +35,7 @@ curl http://localhost:3000/health
 The CLI has no npm/bun deps — just `curl` and `age` (`brew install age`).
 
 ```bash
-# install
-ln -sf "$(pwd)/cli/memb.sh" ~/bin/memb   # ~/bin must be on $PATH
+curl -fsSL https://membridge.yaro.fr/install | bash
 
 # configure (after signing in at membridge.yaro.fr/auth/github)
 memb configure mem_<your-key>
