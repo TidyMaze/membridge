@@ -148,7 +148,7 @@
       <a href="#security">Security</a>
       <a href="#quickstart">Quickstart</a>
     </div>
-    <a class="btn btn-primary" href="https://github.com/TidyMaze/membridge">GitHub →</a>
+    <a class="btn btn-primary" href="https://github.com/TidyMaze/membridge" onclick="gtag('event','click_github_nav',{event_category:'nav'})">GitHub →</a>
   </nav>
 </header>
 
@@ -163,7 +163,7 @@
     </p>
     <div class="cta">
       <a class="btn btn-primary" href="https://membridge.yaro.fr/auth/github" onclick="gtag('event','click_hosted_instance',{event_category:'cta'})">Use the free hosted instance →</a>
-      <a class="btn btn-ghost" href="#quickstart">Self-host instead</a>
+      <a class="btn btn-ghost" href="#quickstart" onclick="gtag('event','click_selfhost',{event_category:'cta'})">Self-host instead</a>
       <a class="btn btn-ghost" href="https://github.com/TidyMaze/membridge" onclick="gtag('event','click_view_source',{event_category:'cta'})">View source</a>
     </div>
 
@@ -309,12 +309,30 @@
 function copyTerm(btn) {
   const pre = btn.closest('.term').querySelector('pre');
   const text = pre.innerText;
+  const section = btn.closest('section');
+  const label = section ? (section.id || 'hero') : 'hero';
   navigator.clipboard.writeText(text).then(() => {
+    gtag('event', 'click_copy_command', {event_category: 'engagement', event_label: label});
     btn.textContent = 'copied!';
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
   });
 }
+
+
+const _observed = new Set();
+const _observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting && !_observed.has(e.target.id)) {
+      _observed.add(e.target.id);
+      gtag('event', 'scroll_to_' + e.target.id, {event_category: 'engagement'});
+    }
+  });
+}, {threshold: 0.3});
+['security', 'quickstart'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) _observer.observe(el);
+});
 </script>
 </body>
 </html>
