@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MemBridge — one encrypted memory, everywhere Claude works</title>
-<meta name="description" content="MemBridge syncs an encrypted memory file between Claude Code and Claude.ai over MCP, with GitHub OAuth and OAuth 2.1 PKCE.">
+<title>MemBridge — one encrypted memory, shared across all your AI agents</title>
+<meta name="description" content="MemBridge syncs an encrypted memory context across Claude Code, Gemini, Cursor, and web-based AI tools via standard MCP.">
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BV0RE0K42J"></script>
 <script>
@@ -92,7 +92,7 @@
   .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
   @media (max-width: 760px) { .grid3, .grid2 { grid-template-columns: 1fr; } }
 
-  .card { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 14px; padding: 26px; }
+  .card { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 14px; padding: 26px; min-width: 0; overflow: hidden; }
   .card .icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(124,92,255,0.12); color: var(--accent-2); margin-bottom: 16px; font-size: 1.1rem; }
   .card h3 { margin: 0 0 8px; font-size: 1.05rem; }
   .card p { margin: 0; color: var(--text-dim); font-size: 0.92rem; line-height: 1.6; }
@@ -161,10 +161,10 @@
   <section class="hero">
     <img class="illustration hero-img" src="images/hero.svg" alt="A terminal window and a browser chat window connected through an encrypted MemBridge link">
     <div class="pill">Open source &amp; self-hostable — or use the free hosted instance</div>
-    <h1>One encrypted memory.<br><span class="grad">Everywhere Claude works.</span></h1>
+    <h1>One encrypted memory.<br><span class="grad">Shared across all your AI agents.</span></h1>
     <p class="sub">
-      Keep your notes, decisions, and rules in sync between Claude Code and Claude.ai —
-      stored as ciphertext, exposed as a standard MCP server.
+      Keep your notes, decisions, and rules in sync across your local terminal, IDE code editors,
+      and web-based AI chats — stored as ciphertext, exposed as a standard, tool-agnostic MCP server.
     </p>
     <div class="cta">
       <a class="btn btn-primary" href="https://membridge.yaro.fr/auth/github" onclick="gtag('event','click_hosted_instance',{event_category:'cta'})">Use the free hosted instance →</a>
@@ -183,24 +183,25 @@
 <span class="c1">$</span> claude mcp add --transport http membridge https://membridge.yaro.fr/mcp
 <span class="c1">$</span> memb push
 <span class="c2">✓</span> context encrypted and synced.
-
+ 
 <span class="c3">&gt;</span> use membridge to add a note: "ship the v2 API by Friday"
-<span class="c2">✓</span> note added — visible next time Claude Code pulls.</pre>
+<span class="c2">✓</span> note added — visible next time your local agent pulls.</pre>
     </div>
   </section>
 
   <section id="how">
     <div class="section-head">
       <div class="tag">How it works</div>
-      <h2>Same context, two clients, zero copy-paste</h2>
-      <p>One ciphertext blob per user. Both Claude surfaces read and write it through the same MCP tools.</p>
+      <h2>Same memory context, all your AI agents, zero copy-paste</h2>
+      <p>One ciphertext blob per user. All your CLI terminals, IDE assistants, and browser chats read and write it through standard MCP tools.</p>
     </div>
     <div class="flow">
-      <div class="node"><b>Local</b>Claude Code<br>CLI push / pull</div>
+      <div class="node"><b>Local CLI / IDE</b>Claude Code, Cursor, etc.<br>CLI push / pull</div>
       <div class="arrow">⇄</div>
       <div class="node"><b>Server</b>MemBridge<br>encrypted storage</div>
       <div class="arrow">⇄</div>
-      <div class="node"><b>Browser</b>Claude.ai<br>MCP tool calls</div>
+      <div class="node"><b>Editor &amp; Web Chats</b>Claude.ai, Gemini, etc.<br>MCP tool calls</div>
+    </div>
     </div>
     <img class="illustration diagram-img" src="images/diagram.svg" alt="Diagram: your device runs age encrypt, MemBridge stores ciphertext only, the other device runs age decrypt">
     <div class="grid3" style="margin-top:48px">
@@ -283,9 +284,9 @@
         <h3>age encryption</h3>
         <p>Context is stored as ciphertext only. The CLI's <code class="inline">push</code>/<code class="inline">pull</code>
         are end-to-end — the server never sees your key. MCP tool calls pass the key as an argument over TLS
-        so the server can decrypt on your behalf (necessary for Claude.ai web, which has no local crypto) —
-        never persisted, but not zero-knowledge. MCP tools work in interactive Claude Code sessions;
-        non-interactive subprocesses (<code class="inline">claude -p</code>) do not inherit MCP auth.</p>
+        so the server can decrypt on your behalf (necessary for browser-based chats, which lack local crypto) —
+        never persisted, but not zero-knowledge. MCP tools work in interactive assistant sessions;
+        non-interactive subprocesses do not inherit MCP auth.</p>
       </div>
       <div class="card">
         <div class="icon">⑤</div>
@@ -294,8 +295,8 @@
       </div>
       <div class="card">
         <div class="icon">⑥</div>
-        <h3>OAuth 2.1 + PKCE for MCP</h3>
-        <p>Claude Code and Claude.ai authorize via standard dynamic client registration and PKCE — no manually-managed client secrets, no shared passwords. The authorization server is the MemBridge server itself.</p>
+        <h3>OAuth 2.1 + PKCE for AI Clients</h3>
+        <p>AI agents and web clients authorize via standard dynamic client registration and PKCE — no manually-managed client secrets, no shared passwords. The authorization server is the MemBridge server itself.</p>
       </div>
       <div class="card">
         <div class="icon">⑦</div>

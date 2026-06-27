@@ -1,16 +1,16 @@
 # MemBridge
 
-![One encrypted memory, everywhere Claude works](docs/images/hero-two-surfaces-one-memory.png)
+![One encrypted memory, shared across all your AI agents](docs/images/hero-two-surfaces-one-memory.png)
 
-Encrypted memory bridge between Claude Code (local) and Claude.ai (web), exposed as an MCP server.
+Shared encrypted memory context for local IDEs, CLI tools, and browser-based AI chats, exposed as a standard MCP server.
 
 Open source and self-hostable — or skip the setup and use the **free hosted instance** at
 [membridge.yaro.fr](https://membridge.yaro.fr/auth/github) (sign in with GitHub, no credit card, no setup).
 
 The bash CLI (`push`/`pull`) is genuinely end-to-end encrypted — your age key never leaves your machine.
-MCP tool calls (used by both Claude Code and Claude.ai web) send the key as a call argument over TLS so the
-server can decrypt on your behalf; this is necessary because Claude.ai web has no local shell to run `age`
-itself. The key is never persisted server-side, but for MCP calls it is *not* zero-knowledge.
+MCP tool calls (used by AI assistants and browser chats) send the key as a call argument over TLS so the
+server can decrypt on your behalf; this is necessary because browser contexts lack a local shell to run `age`
+directly. The key is never persisted server-side, but for MCP calls it is *not* zero-knowledge.
 
 ![Your device runs age encrypt, MemBridge stores ciphertext only, the other device runs age decrypt](docs/images/how-it-works-encrypt-bridge-decrypt.png)
 
