@@ -1,6 +1,6 @@
 services:
   app:
-    build: .
+    image: ghcr.io/tidymaze/membridge:latest
     restart: unless-stopped
     env_file: .env
     ports:
@@ -24,6 +24,13 @@ services:
       interval: 2s
       timeout: 3s
       retries: 10
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 300 --cleanup
 
 networks:
   caddy:

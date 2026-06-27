@@ -1,0 +1,13 @@
+.git
+node_modules
+.env
+.env.test
+.env.example
+docker-compose*.yml
+test/
+*.md
+Caddyfile
+bun.lock
+bunfig.toml
+security-audit.html
+.playwright-mcp
