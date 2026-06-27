@@ -7,7 +7,7 @@ export async function sha256Hex(input: string) {
 }
 
 export async function resetDb() {
-  await sql`TRUNCATE oauth_codes, mcp_authorize_requests, oauth_clients, rate_limits, contexts, api_keys, users CASCADE`;
+  await sql`TRUNCATE done_tokens, oauth_codes, mcp_authorize_requests, oauth_clients, rate_limits, contexts, api_keys, users CASCADE`;
 }
 
 export async function createTestUser(githubId: string, username: string) {

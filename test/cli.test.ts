@@ -25,7 +25,7 @@ describe("D6: CLI memory.sh", () => {
   });
 
   async function runCli(args: string[], env: Record<string, string> = {}) {
-    const proc = Bun.spawn(["bash", `${import.meta.dir}/../cli/memory.sh`, ...args], {
+    const proc = Bun.spawn(["bash", `${import.meta.dir}/../cli/memb.sh`, ...args], {
       env: { ...process.env, HOME: homeDir, ...env },
       stdout: "pipe",
       stderr: "pipe",

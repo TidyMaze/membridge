@@ -16,11 +16,11 @@ async function sha256Hex(input: string) {
 
 auth.get("/auth/github", (c) => {
   const state = randomHex(16);
-  setCookie(c, "oauth_state", state, { httpOnly: true, path: "/", maxAge: 600 });
+  setCookie(c, "oauth_state", state, { httpOnly: true, path: "/", maxAge: 600, sameSite: "Lax" });
 
   const continuation = c.req.query("continuation");
   if (continuation) {
-    setCookie(c, "mcp_continuation", continuation, { httpOnly: true, path: "/", maxAge: 600 });
+    setCookie(c, "mcp_continuation", continuation, { httpOnly: true, path: "/", maxAge: 600, sameSite: "Lax" });
   }
 
   const url = new URL("https://github.com/login/oauth/authorize");
@@ -77,7 +77,7 @@ auth.get("/auth/callback", async (c) => {
 
   const continuationId = getCookie(c, "mcp_continuation");
   if (continuationId) {
-    setCookie(c, "mcp_continuation", "", { httpOnly: true, path: "/", maxAge: 0 });
+    setCookie(c, "mcp_continuation", "", { httpOnly: true, path: "/", maxAge: 0, sameSite: "Lax" });
 
     const [pending] = await sql`
       SELECT * FROM mcp_authorize_requests WHERE id = ${continuationId} AND expires_at > NOW() LIMIT 1
@@ -98,10 +98,10 @@ auth.get("/auth/callback", async (c) => {
     }
   }
 
-  const doneUrl = new URL("/auth/done", process.env.BASE_URL);
-  doneUrl.searchParams.set("key", rawKey);
-  doneUrl.searchParams.set("user", username);
-  return c.redirect(doneUrl.toString());
+  const [token] = await sql`
+    INSERT INTO done_tokens (raw_key, username) VALUES (${rawKey}, ${username}) RETURNING id
+  `;
+  return c.redirect(`/auth/done?token=${token.id}`);
 });
 
 function escapeHtml(s: string) {
@@ -109,8 +109,16 @@ function escapeHtml(s: string) {
 }
 
 auth.get("/auth/done", async (c) => {
-  const key = escapeHtml(c.req.query("key") ?? "");
-  const user = escapeHtml(c.req.query("user") ?? "");
+  const tokenId = c.req.query("token");
+  if (!tokenId) return c.json({ error: "missing_token" }, 400);
+
+  const [row] = await sql`
+    DELETE FROM done_tokens WHERE id = ${tokenId} AND expires_at > NOW() RETURNING raw_key, username
+  `;
+  if (!row) return c.json({ error: "token_not_found" }, 404);
+
+  const key = escapeHtml(row.raw_key as string);
+  const user = escapeHtml(row.username as string);
   const configCmd = `memb configure ${key}`;
   const template = await Bun.file(new URL("../views/auth-done.html", import.meta.url)).text();
   const html = template

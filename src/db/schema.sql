@@ -62,5 +62,12 @@ CREATE TABLE IF NOT EXISTS mcp_authorize_requests (
   created_at            TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS done_tokens (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  raw_key    TEXT NOT NULL,
+  username   TEXT NOT NULL,
+  expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '2 minutes'
+);
+
 CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
 CREATE INDEX IF NOT EXISTS idx_rate_limits_user ON rate_limits(user_id, window_start);

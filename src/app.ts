@@ -5,6 +5,8 @@ import { auth } from "./routes/auth";
 import { context } from "./routes/context";
 import { mcp } from "./routes/mcp";
 import { oauthMeta } from "./routes/oauth-meta";
+import { rateLimitMiddleware } from "./middleware/ratelimit";
+import { authMiddleware } from "./middleware/auth";
 
 export const app = new Hono();
 app.use(logger());
@@ -20,6 +22,7 @@ app.use(
   "/mcp",
   cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["Content-Type", "Authorization"] }),
 );
+app.use("/mcp", authMiddleware, rateLimitMiddleware);
 
 app.get("/", (c) => c.redirect("https://tidymaze.github.io/membridge/", 302));
 app.get("/health", (c) => c.json({ ok: true }));

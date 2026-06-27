@@ -1,19 +1,23 @@
 import { Hono, type Context } from "hono";
 import { sql } from "../db/client";
+import { mkdtempSync, chmodSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 export const mcp = new Hono();
 
-async function sha256Hex(input: string) {
-  const hasher = new Bun.CryptoHasher("sha256");
-  hasher.update(input);
-  return hasher.digest("hex");
+function withSecureTmpKey<T>(ageKey: string, fn: (keyPath: string) => Promise<T>): Promise<T> {
+  const dir = mkdtempSync(join(tmpdir(), "membridge-"));
+  chmodSync(dir, 0o700);
+  const keyPath = join(dir, "k");
+  return Bun.write(keyPath, ageKey.endsWith("\n") ? ageKey : ageKey + "\n")
+    .then(() => { chmodSync(keyPath, 0o600); return fn(keyPath); })
+    .finally(() => { rmSync(dir, { recursive: true, force: true }); });
 }
 
 async function ageDecrypt(ciphertext: Buffer, ageKey: string): Promise<string> {
-  const tmpKeyPath = `/tmp/membridge-age-${crypto.randomUUID()}.key`;
-  await Bun.write(tmpKeyPath, ageKey.endsWith("\n") ? ageKey : ageKey + "\n");
-  try {
-    const dec = Bun.spawn(["age", "-d", "-i", tmpKeyPath], { stdin: "pipe", stdout: "pipe", stderr: "pipe" });
+  return withSecureTmpKey(ageKey, async (keyPath) => {
+    const dec = Bun.spawn(["age", "-d", "-i", keyPath], { stdin: "pipe", stdout: "pipe", stderr: "pipe" });
     dec.stdin.write(ciphertext);
     dec.stdin.end();
     const [out, err, exitCode] = await Promise.all([
@@ -23,16 +27,12 @@ async function ageDecrypt(ciphertext: Buffer, ageKey: string): Promise<string> {
     ]);
     if (exitCode !== 0) throw new Error(`age decrypt failed: ${err.trim()}`);
     return out;
-  } finally {
-    await Bun.file(tmpKeyPath).delete().catch(() => {});
-  }
+  });
 }
 
 async function ageEncrypt(plaintext: string, ageKey: string): Promise<Buffer> {
-  const tmpKeyPath = `/tmp/membridge-age-${crypto.randomUUID()}.key`;
-  await Bun.write(tmpKeyPath, ageKey.endsWith("\n") ? ageKey : ageKey + "\n");
-  try {
-    const recipientProc = Bun.spawn(["age-keygen", "-y", tmpKeyPath], { stdout: "pipe" });
+  return withSecureTmpKey(ageKey, async (keyPath) => {
+    const recipientProc = Bun.spawn(["age-keygen", "-y", keyPath], { stdout: "pipe" });
     const pubKey = (await new Response(recipientProc.stdout).text()).trim();
 
     const enc = Bun.spawn(["age", "-r", pubKey], { stdin: "pipe", stdout: "pipe", stderr: "pipe" });
@@ -45,9 +45,7 @@ async function ageEncrypt(plaintext: string, ageKey: string): Promise<Buffer> {
     ]);
     if (exitCode !== 0) throw new Error(`age encrypt failed: ${err.trim()}`);
     return Buffer.from(out);
-  } finally {
-    await Bun.file(tmpKeyPath).delete().catch(() => {});
-  }
+  });
 }
 
 const AGE_KEY_PROPERTY = {
@@ -133,17 +131,7 @@ function rpcError(id: unknown, code: number, message: string) {
   return { jsonrpc: "2.0", id, error: { code, message } };
 }
 
-function unauthorized(c: Context) {
-  const resourceMetadataUrl = `${process.env.BASE_URL}/.well-known/oauth-protected-resource`;
-  return c.json({ error: "unauthorized" }, 401, {
-    "WWW-Authenticate": `Bearer resource_metadata="${resourceMetadataUrl}"`,
-  });
-}
-
 mcp.get("/mcp", (c) => {
-  const header = c.req.header("Authorization") ?? "";
-  if (!header.startsWith("Bearer ")) return unauthorized(c);
-
   const stream = new ReadableStream({
     start(controller) {
       controller.enqueue(new TextEncoder().encode(`event: endpoint\ndata: /mcp\n\n`));
@@ -155,14 +143,7 @@ mcp.get("/mcp", (c) => {
 });
 
 mcp.post("/mcp", async (c) => {
-  const header = c.req.header("Authorization") ?? "";
-  if (!header.startsWith("Bearer ")) return unauthorized(c);
-
-  const rawKey = header.slice("Bearer ".length);
-  const keyHash = await sha256Hex(rawKey);
-  const [row] = await sql`SELECT user_id FROM api_keys WHERE key_hash = ${keyHash} LIMIT 1`;
-  if (!row) return unauthorized(c);
-  const userId = row.user_id;
+  const userId = c.get("userId") as string;
 
   const body = await c.req.json();
   const { id, method, params } = body;

@@ -62,6 +62,13 @@ describe("D5: OAuth 2.1 PKCE for MCP", () => {
     const userId = await createTestUser("400", "pkce-user");
     await createApiKey(userId, "mem_pkce_key");
 
+    const regRes = await app.request("/oauth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_name: "test-client", redirect_uris: ["http://localhost:9999/callback"] }),
+    });
+    const { client_id: testClientId } = await regRes.json();
+
     const verifier = "a".repeat(64);
     const challenge = base64UrlSha256(verifier);
 
@@ -69,7 +76,7 @@ describe("D5: OAuth 2.1 PKCE for MCP", () => {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: "test-client",
+        client_id: testClientId,
         redirect_uri: "http://localhost:9999/callback",
         state: "xyz",
         code_challenge: challenge,
@@ -96,6 +103,15 @@ describe("D5: OAuth 2.1 PKCE for MCP", () => {
   });
 
   test("authorize rejects an invalid API key", async () => {
+    await app.request("/oauth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_name: "test-client", redirect_uris: ["http://localhost:9999/callback"] }),
+    });
+    // re-fetch the generated client_id
+    const { sql: dbSql } = await import("../src/db/client");
+    const [clientRow] = await dbSql`SELECT client_id FROM oauth_clients WHERE client_name = 'test-client' LIMIT 1`;
+
     const verifier = "b".repeat(64);
     const challenge = base64UrlSha256(verifier);
 
@@ -103,7 +119,7 @@ describe("D5: OAuth 2.1 PKCE for MCP", () => {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: "test-client",
+        client_id: clientRow.client_id,
         redirect_uri: "http://localhost:9999/callback",
         code_challenge: challenge,
         code_challenge_method: "S256",
@@ -117,6 +133,14 @@ describe("D5: OAuth 2.1 PKCE for MCP", () => {
     const userId = await createTestUser("401", "pkce-bad-verifier");
     await createApiKey(userId, "mem_pkce_bad_key");
 
+    await app.request("/oauth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_name: "pkce-bad-client", redirect_uris: ["http://localhost:9999/callback"] }),
+    });
+    const { sql: dbSql } = await import("../src/db/client");
+    const [clientRow] = await dbSql`SELECT client_id FROM oauth_clients WHERE client_name = 'pkce-bad-client' LIMIT 1`;
+
     const verifier = "c".repeat(64);
     const challenge = base64UrlSha256(verifier);
 
@@ -124,7 +148,7 @@ describe("D5: OAuth 2.1 PKCE for MCP", () => {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: "test-client",
+        client_id: clientRow.client_id,
         redirect_uri: "http://localhost:9999/callback",
         code_challenge: challenge,
         code_challenge_method: "S256",
@@ -146,6 +170,14 @@ describe("D5: OAuth 2.1 PKCE for MCP", () => {
     const userId = await createTestUser("402", "pkce-replay");
     await createApiKey(userId, "mem_pkce_replay_key");
 
+    await app.request("/oauth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_name: "replay-client", redirect_uris: ["http://localhost:9999/callback"] }),
+    });
+    const { sql: dbSql } = await import("../src/db/client");
+    const [clientRow] = await dbSql`SELECT client_id FROM oauth_clients WHERE client_name = 'replay-client' LIMIT 1`;
+
     const verifier = "d".repeat(64);
     const challenge = base64UrlSha256(verifier);
 
@@ -153,7 +185,7 @@ describe("D5: OAuth 2.1 PKCE for MCP", () => {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: "test-client",
+        client_id: clientRow.client_id,
         redirect_uri: "http://localhost:9999/callback",
         code_challenge: challenge,
         code_challenge_method: "S256",

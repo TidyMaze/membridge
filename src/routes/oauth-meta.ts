@@ -107,6 +107,11 @@ oauthMeta.post("/oauth/authorize", async (c) => {
   const codeChallenge = String(body.code_challenge ?? "");
   const codeChallengeMethod = String(body.code_challenge_method ?? "");
 
+  const [client] = await sql`SELECT redirect_uris FROM oauth_clients WHERE client_id = ${clientId} LIMIT 1`;
+  if (!client) return c.json({ error: "invalid_client" }, 400);
+  const allowedUris: string[] = Array.isArray(client.redirect_uris) ? client.redirect_uris : JSON.parse(client.redirect_uris);
+  if (!allowedUris.includes(redirectUri)) return c.json({ error: "invalid_redirect_uri" }, 400);
+
   const keyHash = await sha256Hex(apiKey);
   const [row] = await sql`SELECT user_id FROM api_keys WHERE key_hash = ${keyHash} LIMIT 1`;
   if (!row) return c.json({ error: "invalid_api_key" }, 401);
