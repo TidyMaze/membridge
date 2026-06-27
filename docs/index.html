@@ -221,17 +221,51 @@
       </div>
     </div>
 
-    <div class="card" style="margin-top:24px">
-      <div class="icon" style="margin-bottom:12px">⚡</div>
-      <h3>Auto-push with a Claude Code Stop hook</h3>
-      <p style="margin-bottom:14px">Add this to <code class="inline">~/.claude/settings.json</code> — your context is pushed silently every time a session ends, no manual <code class="inline">memb push</code> needed.</p>
-      <div class="term" style="max-width:100%; box-shadow:none;">
-        <div class="term-bar">
-          <div class="dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
-          <button class="copy-btn" onclick="copyTerm(this)">copy</button>
+    <div class="grid2" style="margin-top:24px">
+      <div class="card">
+        <div class="icon" style="margin-bottom:12px">⚡</div>
+        <h3>Auto-push with a Claude Code Stop hook</h3>
+        <p style="margin-bottom:14px">Add this to <code class="inline">~/.claude/settings.json</code> — your context is pushed silently every time a session ends, no manual <code class="inline">memb push</code> needed.</p>
+        <div class="term" style="max-width:100%; box-shadow:none;">
+          <div class="term-bar">
+            <div class="dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+            <button class="copy-btn" onclick="copyTerm(this)">copy</button>
+          </div>
+          <pre><span class="c1">// ~/.claude/settings.json</span>
+{
+  <span class="c2">"hooks"</span>: {
+    <span class="c2">"Stop"</span>: [
+      { <span class="c2">"hooks"</span>: [{ <span class="c2">"type"</span>: <span class="c3">"command"</span>, <span class="c2">"command"</span>: <span class="c3">"memb push --silent 2>/dev/null || true"</span> }] }
+    ]
+  }
+}</pre>
         </div>
-        <pre><span class="c1">// ~/.claude/settings.json</span>
-{ <span class="c2">"hooks"</span>: { <span class="c2">"Stop"</span>: [{ <span class="c2">"hooks"</span>: [{ <span class="c2">"type"</span>: <span class="c3">"command"</span>, <span class="c2">"command"</span>: <span class="c3">"memb push --silent 2>/dev/null || true"</span> }] }] } }</pre>
+      </div>
+
+      <div class="card">
+        <div class="icon" style="margin-bottom:12px">♊</div>
+        <h3>Connect to Gemini / Antigravity IDE</h3>
+        <p style="margin-bottom:14px">Configure MemBridge as an SSE server in your local Gemini config (<code class="inline">~/.gemini/config/mcp_config.json</code>):</p>
+        <div class="term" style="max-width:100%; box-shadow:none;">
+          <div class="term-bar">
+            <div class="dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+            <button class="copy-btn" onclick="copyTerm(this)">copy</button>
+          </div>
+          <pre><span class="c1">// mcp_config.json</span>
+{
+  <span class="c2">"mcpServers"</span>: {
+    <span class="c2">"membridge"</span>: {
+      <span class="c2">"url"</span>: <span class="c3">"https://membridge.yaro.fr/mcp"</span>,
+      <span class="c2">"headers"</span>: {
+        <span class="c2">"Authorization"</span>: <span class="c3">"Bearer mem_YOUR_KEY"</span>
+      }
+    }
+  }
+}</pre>
+        </div>
+        <p style="font-size:0.82rem; color:var(--text-dim); margin-top:14px; line-height:1.4;">
+          ⚠️ <b>Unsupported:</b> Gemini Web (<code class="inline">gemini.google.com</code>) does not support custom MCP connections due to browser sandboxing. Also, Antigravity's continuous IDE agent model does not support a CLI session "Stop" hook.
+        </p>
       </div>
     </div>
   </section>

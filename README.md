@@ -69,6 +69,31 @@ Then in a Claude Code session you can call `get_context`, `add_note`, and `searc
 > **Note:** MCP tools only work inside an interactive Claude Code session. Subprocesses launched via
 > `claude -p` do not inherit the parent session's MCP authentication.
 
+## Connect to Gemini / Antigravity IDE (MCP)
+
+MemBridge is fully compatible with Gemini / Antigravity IDE via standard MCP SSE transport. 
+
+Add the server configuration to your `~/.gemini/config/mcp_config.json` file:
+
+```json
+{
+  "mcpServers": {
+    "membridge": {
+      "url": "https://membridge.yaro.fr/mcp",
+      "headers": {
+        "Authorization": "Bearer mem_<your-key>"
+      }
+    }
+  }
+}
+```
+
+Once configured, the tools `get_context`, `add_note`, and `search` will be available directly within your Gemini / Antigravity chat workspace.
+
+### Unsupported Features
+*   **Gemini Web (`gemini.google.com`)**: Does NOT support custom third-party MCP connections due to browser-level sandboxing and CORS limitations.
+*   **Antigravity Session-End Hook**: Antigravity runs as a continuous, stateful IDE developer agent rather than a command-line session, so there is no equivalent to Claude Code's shell `Stop` hook. Pushes must be run manually (`memb push`).
+
 ## Tests
 
 ```bash
