@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { setCookie, getCookie } from "hono/cookie";
+import { timingSafeEqual } from "node:crypto";
 import { sql } from "../db/client";
 
 export const oauthMeta = new Hono();
@@ -23,6 +25,13 @@ function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]!));
 }
 
+function safeCompare(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
+
 oauthMeta.get("/.well-known/oauth-protected-resource", (c) => {
   return c.json({
     resource: process.env.BASE_URL,
@@ -45,6 +54,14 @@ oauthMeta.get("/.well-known/oauth-authorization-server", (c) => {
 });
 
 oauthMeta.post("/oauth/register", async (c) => {
+  const regToken = process.env.REGISTRATION_TOKEN;
+  if (regToken) {
+    const authHeader = c.req.header("Authorization") ?? "";
+    if (authHeader !== `Bearer ${regToken}`) {
+      return c.json({ error: "unauthorized" }, 401);
+    }
+  }
+
   const body = await c.req.json().catch(() => ({}) as Record<string, unknown>);
   const redirectUris = Array.isArray(body.redirect_uris) ? body.redirect_uris : [];
 
@@ -73,6 +90,11 @@ oauthMeta.get("/oauth/authorize", async (c) => {
     return c.json({ error: "invalid_request" }, 400);
   }
 
+  const [client] = await sql`SELECT redirect_uris FROM oauth_clients WHERE client_id = ${client_id} LIMIT 1`;
+  if (!client) return c.json({ error: "invalid_client" }, 400);
+  const allowedUris: string[] = Array.isArray(client.redirect_uris) ? client.redirect_uris : JSON.parse(client.redirect_uris);
+  if (!allowedUris.includes(redirect_uri)) return c.json({ error: "invalid_redirect_uri" }, 400);
+
   const continuationId = randomHex(16);
   await sql`
     INSERT INTO mcp_authorize_requests (id, client_id, redirect_uri, mcp_state, code_challenge, code_challenge_method, expires_at)
@@ -80,12 +102,16 @@ oauthMeta.get("/oauth/authorize", async (c) => {
   `;
   const githubUrl = `/auth/github?continuation=${continuationId}`;
 
+  const csrfToken = randomHex(16);
+  setCookie(c, "csrf_token", csrfToken, { httpOnly: true, path: "/", maxAge: 600, sameSite: "Lax" });
+
   const html = `<!doctype html>
 <html><body>
 <h1>Authorize MemBridge access for ${escapeHtml(client_id)}</h1>
 <p><a href="${githubUrl}"><button type="button">Continue with GitHub</button></a></p>
 <p>Already have an API key?</p>
 <form method="POST" action="/oauth/authorize">
+  <input type="hidden" name="csrf_token" value="${csrfToken}">
   <input type="hidden" name="client_id" value="${escapeHtml(client_id)}">
   <input type="hidden" name="redirect_uri" value="${escapeHtml(redirect_uri)}">
   <input type="hidden" name="state" value="${escapeHtml(state ?? "")}">
@@ -100,6 +126,12 @@ oauthMeta.get("/oauth/authorize", async (c) => {
 
 oauthMeta.post("/oauth/authorize", async (c) => {
   const body = await c.req.parseBody();
+  const csrfCookie = getCookie(c, "csrf_token");
+  const csrfInput = String(body.csrf_token ?? "");
+  if (!csrfCookie || csrfCookie !== csrfInput) {
+    return c.json({ error: "invalid_csrf" }, 403);
+  }
+
   const apiKey = String(body.api_key ?? "");
   const clientId = String(body.client_id ?? "");
   const redirectUri = String(body.redirect_uri ?? "");
@@ -142,7 +174,7 @@ oauthMeta.post("/oauth/token", async (c) => {
   }
 
   const expectedChallenge = base64UrlSha256(codeVerifier);
-  if (expectedChallenge !== row.code_challenge) return c.json({ error: "invalid_grant" }, 400);
+  if (!safeCompare(expectedChallenge, row.code_challenge)) return c.json({ error: "invalid_grant" }, 400);
 
   await sql`UPDATE oauth_codes SET used = TRUE WHERE code = ${code}`;
 

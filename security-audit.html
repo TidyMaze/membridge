@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MemBridge — Security Audit</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0d10; --bg-soft: #11151a; --border: #1f2630;
+    --text: #e6edf3; --text-dim: #8b97a5;
+    --accent: #7c5cff; --accent-2: #34e2c4;
+    --red: #ff5f57; --orange: #ffbd2e; --yellow: #e8c76a; --green: #28c840;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.6; padding: 40px 24px; }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 4px; }
+  .meta { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 40px; }
+  .meta span { color: var(--accent-2); }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 40px; }
+  .summary-card { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+  .summary-card .count { font-size: 2rem; font-weight: 700; }
+  .summary-card .label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
+  .c-critical .count { color: var(--red); }
+  .c-high .count { color: var(--orange); }
+  .c-medium .count { color: var(--yellow); }
+  .c-low .count { color: var(--green); }
+
+  h2 { font-size: 1.1rem; font-weight: 600; margin: 36px 0 16px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.78rem; }
+
+  .finding { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; margin-bottom: 12px; border-left: 3px solid var(--border); }
+  .finding.critical { border-left-color: var(--red); }
+  .finding.high     { border-left-color: var(--orange); }
+  .finding.medium   { border-left-color: var(--yellow); }
+  .finding.low      { border-left-color: var(--green); }
+  .finding.vps      { border-left-color: var(--accent-2); }
+  .finding.ok       { border-left-color: var(--green); opacity: 0.7; }
+
+  .finding-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+  .finding-title { font-weight: 600; font-size: 0.97rem; }
+  .badge { font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; }
+  .badge.critical { background: rgba(255,95,87,0.15); color: var(--red); }
+  .badge.high     { background: rgba(255,189,46,0.15); color: var(--orange); }
+  .badge.medium   { background: rgba(232,199,106,0.12); color: var(--yellow); }
+  .badge.low      { background: rgba(40,200,64,0.1); color: var(--green); }
+  .badge.ok       { background: rgba(40,200,64,0.1); color: var(--green); }
+  .badge.info     { background: rgba(52,226,196,0.1); color: var(--accent-2); }
+
+  .finding-desc { color: var(--text-dim); font-size: 0.88rem; margin-bottom: 10px; }
+  .finding-meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.78rem; }
+  .finding-meta .loc { font-family: var(--mono); color: var(--accent-2); }
+  .finding-meta .fix { color: var(--text); }
+
+  .top10 { counter-reset: item; }
+  .top10-item { display: flex; gap: 16px; align-items: flex-start; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin-bottom: 10px; }
+  .top10-item::before { counter-increment: item; content: counter(item); font-size: 1.4rem; font-weight: 700; color: var(--accent); flex-shrink: 0; width: 28px; line-height: 1.3; }
+  .top10-item .t { font-weight: 600; font-size: 0.93rem; margin-bottom: 3px; }
+  .top10-item .d { color: var(--text-dim); font-size: 0.83rem; }
+
+  code { font-family: var(--mono); font-size: 0.82em; background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>MemBridge — Security Audit</h1>
+  <p class="meta">Scope: source code + VPS/network · <span>2026-06-27</span> · Read-only review</p>
+
+  <div class="summary-grid">
+    <div class="summary-card c-critical"><div class="count">0</div><div class="label">Critical</div></div>
+    <div class="summary-card c-high"><div class="count">0</div><div class="label">High</div></div>
+    <div class="summary-card c-medium"><div class="count">0</div><div class="label">Medium</div></div>
+    <div class="summary-card c-low"><div class="count">2</div><div class="label">Low / VPS</div></div>
+  </div>
+
+  <h2>Top 10 — Priority Actions</h2>
+  <div class="top10">
+
+    <div class="top10-item">
+      <div>
+        <div class="t"><span style="text-decoration: line-through; opacity: 0.6; color: var(--green);">✓ Strip API key from Hono access logs</span></div>
+        <div class="d">Key is passed as <code>?key=mem_xxx</code> query param on <code>/auth/done</code> — logged by <code>logger()</code> middleware on every request. Anyone with log access sees all keys ever issued. Use POST + session or one-time token instead of URL param.</div>
+      </div>
+    </div>
+
+    <div class="top10-item">
+      <div>
+        <div class="t"><span style="text-decoration: line-through; opacity: 0.6; color: var(--green);">✓ Age private key written to <code>/tmp</code> on every MCP decrypt</span></div>
+        <div class="d"><code>src/routes/mcp.ts</code> writes the user's age key (from <code>X-Age-Key</code> header) to <code>/tmp/membridge-age-*.key</code> before spawning the subprocess. Any local process or world-readable <code>/tmp</code> exposes it. Pipe key via stdin instead.</div>
+      </div>
+    </div>
+
+    <div class="top10-item">
+      <div>
+        <div class="t"><span style="text-decoration: line-through; opacity: 0.6; color: var(--green);">✓ No security headers on HTTP responses</span></div>
+        <div class="d">Caddy config for <code>membridge.yaro.fr</code> is a bare <code>reverse_proxy</code> with no <code>header</code> directives. Missing: <code>X-Frame-Options</code>, <code>X-Content-Type-Options</code>, <code>Content-Security-Policy</code>, <code>Strict-Transport-Security</code>. Add them to the Caddyfile block.</div>
+      </div>
+    </div>
+
+    <div class="top10-item">
+      <div>
+        <div class="t"><span style="text-decoration: line-through; opacity: 0.6; color: var(--green);">✓ No firewall — all ports open by default</span></div>
+        <div class="d">VPS has <code>iptables</code> policy ACCEPT with no rules. Port 8080 is also exposed publicly (another service). Install <code>ufw</code> or <code>nftables</code>: allow 22, 80, 443 only. Port 8080 should not be public.</div>
+      </div>
+    </div>
+
+    <div class="top10-item">
+      <div>
+        <div class="t"><span style="text-decoration: line-through; opacity: 0.6; color: var(--green);">✓ No fail2ban or SSH brute-force protection</span></div>
+        <div class="d">SSH on default port 22, open to the world, root login allowed (key-only but still). No rate limiting or ban mechanism for failed attempts. Install <code>fail2ban</code> with SSH jail, or restrict SSH to a non-standard port + allowlist IPs.</div>
+      </div>
+    </div>
+
+    <div class="top10-item">
+      <div>
+        <div class="t"><span style="text-decoration: line-through; opacity: 0.6; color: var(--green);">✓ OAuth: redirect_uri not validated against registered values</span></div>
+        <div class="d"><code>src/routes/oauth-meta.ts</code> — <code>/oauth/authorize</code> issues auth codes to any <code>redirect_uri</code> supplied, without checking it against the registered URIs in <code>oauth_clients</code>. Classic authorization code interception attack. Validate strictly before issuing code.</div>
+      </div>
+    </div>
+
+    <div class="top10-item">
+      <div>
+        <div class="t"><span style="text-decoration: line-through; opacity: 0.6; color: var(--green);">✓ No CSRF protection on state-mutating form POSTs</span></div>
+        <div class="d"><code>/auth/revoke</code> (key deletion) and <code>/oauth/authorize</code> (OAuth consent) accept POST with no CSRF token and no <code>sameSite</code> cookie attribute. A malicious page can silently revoke the user's API key. Add <code>sameSite: "Lax"</code> to all cookies and a CSRF token to both forms.</div>
+      </div>
+    </div>
+
+    <div class="top10-item">
+      <div>
+        <div class="t"><span style="text-decoration: line-through; opacity: 0.6; color: var(--green);">✓ MCP route has no rate limiting</span></div>
+        <div class="d">The <code>/mcp</code> POST endpoint (tool calls: decrypt, encrypt, search) has no rate limit middleware. The 100 req/hr limit only applies to <code>/api/context</code>. Decrypt operations spawn <code>age</code> subprocesses — easy to DoS. Apply <code>rateLimitMiddleware</code> or a dedicated stricter limit.</div>
+      </div>
+    </div>
+
+    <div class="top10-item">
+      <div>
+        <div class="t"><span style="text-decoration: line-through; opacity: 0.6; color: var(--green);">✓ PasswordAuthentication likely on by default (SSH)</span></div>
+        <div class="d"><code>/etc/ssh/sshd_config</code> has <code>#PasswordAuthentication yes</code> — commented out, meaning the PAM default applies (typically <em>yes</em>). Explicitly set <code>PasswordAuthentication no</code> to force key-only login.</div>
+      </div>
+    </div>
+
+    <div class="top10-item">
+      <div>
+        <div class="t"><span style="text-decoration: line-through; opacity: 0.6; color: var(--green);">✓ API key visible in browser history + HTML form</span></div>
+        <div class="d">Key appears in the URL (<code>/auth/done?key=...</code>) → browser history, referrer headers, server logs. Also embedded in an HTML hidden input for the revoke form — visible in devtools. Refactor to one-time server-side session or signed short-lived token.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <hr>
+
+  <h2>Critical</h2>
+
+  <div class="finding ok ">
+    <div class="finding-header">
+      <div class="finding-title">✓ API key logged via query param on <code>/auth/done</code></div>
+      <span class="badge critical">Resolved</span>
+    </div>
+    <div class="finding-desc">Hono <code>logger()</code> logs every request URL. <code>GET /auth/done?key=mem_xxx&user=y</code> lands in stdout/container logs with the raw API key. Anyone reading Docker logs, log aggregators, or future log shipping gets every key ever generated.</div>
+    <div class="finding-meta">
+      <span class="loc">src/routes/auth.ts:101–104</span>
+      <br><span style="color: var(--green); font-weight: 500;">✓ Verified: Implemented one-time server-side done_tokens.</span><span class="fix">Fix: POST key to short-lived signed session, redirect to <code>/auth/done</code> with a token, display once from session.</span>
+    </div>
+  </div>
+
+  <div class="finding ok ">
+    <div class="finding-header">
+      <div class="finding-title">✓ Age private key written to <code>/tmp</code> in plaintext</div>
+      <span class="badge critical">Resolved</span>
+    </div>
+    <div class="finding-desc">Every MCP tool call writes the user's age private key to <code>/tmp/membridge-age-{uuid}.key</code>. The file is removed after the subprocess exits, but: (1) <code>/tmp</code> is typically world-listable, (2) crash before cleanup leaves key on disk, (3) other processes on the host can race to read it. This is the master decryption key for the user's context.</div>
+    <div class="finding-meta">
+      <span class="loc">src/routes/mcp.ts:12–51</span>
+      <br><span style="color: var(--green); font-weight: 500;">✓ Verified: Spawns age processes with key passed directly over stdin (-i - and age-keygen -y).</span><span class="fix">Fix: pass key via stdin to <code>age -d -i /dev/stdin</code> — no disk write needed.</span>
+    </div>
+  </div>
+
+  <div class="finding ok ">
+    <div class="finding-header">
+      <div class="finding-title">✓ OAuth redirect_uri not validated against registered URIs</div>
+      <span class="badge critical">Resolved</span>
+    </div>
+    <div class="finding-desc">The <code>/oauth/authorize</code> handler issues authorization codes redirecting to whatever <code>redirect_uri</code> the client supplies, without comparing to the stored <code>oauth_clients.redirect_uris</code>. Attacker registers a client, then sends victim to authorize with attacker's URI — code delivered to attacker, exchanged for token.</div>
+    <div class="finding-meta">
+      <span class="loc">src/routes/oauth-meta.ts:70–124</span>
+      <br><span style="color: var(--green); font-weight: 500;">✓ Verified: Validates redirect_uri matches client's registered URIs in both GET and POST endpoints.</span><span class="fix">Fix: SELECT redirect_uris FROM oauth_clients WHERE client_id = ?; reject if supplied URI not in list.</span>
+    </div>
+  </div>
+
+  <hr>
+  <h2>High</h2>
+
+  <div class="finding ok ">
+    <div class="finding-header">
+      <div class="finding-title">✓ No CSRF protection on key revocation + OAuth consent</div>
+      <span class="badge high">Resolved</span>
+    </div>
+    <div class="finding-desc">POST <code>/auth/revoke</code> accepts a form with the raw API key and deletes it. POST <code>/oauth/authorize</code> issues an auth code. Neither has a CSRF token. Cookies (<code>oauth_state</code>, <code>mcp_continuation</code>) lack <code>sameSite</code> attribute.</div>
+    <div class="finding-meta">
+      <span class="loc">src/routes/auth.ts:364 · src/routes/oauth-meta.ts:101</span>
+      <br><span style="color: var(--green); font-weight: 500;">✓ Verified: Added HttpOnly cookie-based CSRF token validation to /auth/revoke and /oauth/authorize.</span><span class="fix">Fix: add <code>sameSite: "Lax"</code> to all setCookie calls; add hidden CSRF token to both forms.</span>
+    </div>
+  </div>
+
+  <div class="finding ok ">
+    <div class="finding-header">
+      <div class="finding-title">✓ MCP route has no rate limiting</div>
+      <span class="badge high">Resolved</span>
+    </div>
+    <div class="finding-desc"><code>/mcp</code> is not wrapped in <code>rateLimitMiddleware</code>. Tool calls spawn <code>age</code> subprocesses — CPU-intensive. No limit → trivial DoS. The 100 req/hr limit only covers <code>/api/context</code>.</div>
+    <div class="finding-meta">
+      <span class="loc">src/app.ts:28 · src/middleware/ratelimit.ts</span>
+      <br><span style="color: var(--green); font-weight: 500;">✓ Verified: Verified rateLimitMiddleware is applied to POST /mcp endpoint.</span><span class="fix">Fix: apply rateLimitMiddleware to the MCP route, or add a separate stricter limit (e.g. 20/hr).</span>
+    </div>
+  </div>
+
+  <div class="finding ok ">
+    <div class="finding-header">
+      <div class="finding-title">✓ No firewall on VPS — all ports world-accessible</div>
+      <span class="badge high">Resolved</span>
+    </div>
+    <div class="finding-desc"><code>iptables -L INPUT</code> shows policy ACCEPT with no rules. Port 8080 is publicly reachable (another service). Only 22/80/443 should be public. Docker containers could be exposed accidentally in future.</div>
+    <div class="finding-meta">
+      <span class="loc">VPS: 167.233.72.211</span>
+      <br><span style="color: var(--green); font-weight: 500;">✓ Verified: Updated Hetzner Cloud firewall rules to only allow ports 22, 80, and 443, successfully blocking port 8080. SSH connectivity verified working.</span><span class="fix">Fix: <code>ufw default deny incoming; ufw allow 22,80,443/tcp; ufw enable</code></span>
+    </div>
+  </div>
+
+  <div class="finding ok ">
+    <div class="finding-header">
+      <div class="finding-title">✓ No fail2ban — SSH brute-force unprotected</div>
+      <span class="badge high">Resolved</span>
+    </div>
+    <div class="finding-desc">SSH on port 22, open to internet, no rate limiting or auto-ban. Root login is enabled (key-only, but keys can leak). No alerting on repeated failures.</div>
+    <div class="finding-meta">
+      <span class="loc">VPS: sshd_config</span>
+      <br><span style="color: var(--green); font-weight: 500;">✓ Verified: Installed and enabled fail2ban. Explicitly disabled PasswordAuthentication in sshd_config and reloaded sshd service. Verified SSH key login still works.</span><span class="fix">Fix: <code>apt install fail2ban</code>; set <code>PasswordAuthentication no</code> explicitly in sshd_config.</span>
+    </div>
+  </div>
+
+  <hr>
+  <h2>Medium</h2>
+
+  <div class="finding ok ">
+    <div class="finding-header">
+      <div class="finding-title">✓ No HTTP security headers</div>
+      <span class="badge medium">Resolved</span>
+    </div>
+    <div class="finding-desc">Caddyfile for <code>membridge.yaro.fr</code> is a bare <code>reverse_proxy</code> — no <code>X-Frame-Options</code>, <code>X-Content-Type-Options</code>, <code>Content-Security-Policy</code>, or <code>Strict-Transport-Security</code> headers. HSTS not set (though TLS works via Let's Encrypt).</div>
+    <div class="finding-meta">
+      <span class="loc">VPS: /etc/caddy/Caddyfile</span>
+      <br><span style="color: var(--green); font-weight: 500;">✓ Verified: Created Caddyfile with X-Frame-Options, X-Content-Type-Options, Strict-Transport-Security, and Content-Security-Policy headers.</span><span class="fix">Add to Caddyfile: <code>header X-Frame-Options DENY; header X-Content-Type-Options nosniff; header Strict-Transport-Security "max-age=31536000"</code></span>
+    </div>
+  </div>
+
+  <div class="finding ok ">
+    <div class="finding-header">
+      <div class="finding-title">✓ Unauthenticated OAuth client registration</div>
+      <span class="badge medium">Resolved</span>
+    </div>
+    <div class="finding-desc">POST <code>/oauth/register</code> has no authentication. Anyone can register arbitrary OAuth clients with any redirect URIs. Low risk today (only Claude.ai uses MCP), but enables noise and future attacks.</div>
+    <div class="finding-meta">
+      <span class="loc">src/routes/oauth-meta.ts:47–68</span>
+      <br><span style="color: var(--green); font-weight: 500;">✓ Verified: Added REGISTRATION_TOKEN header authentication if configured.</span><span class="fix">Fix: require a registration token or restrict to known client IDs.</span>
+    </div>
+  </div>
+
+  <div class="finding ok ">
+    <div class="finding-header">
+      <div class="finding-title">✓ Timing attack on PKCE challenge comparison</div>
+      <span class="badge medium">Resolved</span>
+    </div>
+    <div class="finding-desc">Token endpoint uses <code>!==</code> string comparison for PKCE challenge validation. JavaScript string comparison is not constant-time. Exploitable via statistical timing over many requests.</div>
+    <div class="finding-meta">
+      <span class="loc">src/routes/oauth-meta.ts:~140</span>
+      <br><span style="color: var(--green); font-weight: 500;">✓ Verified: Implemented constant-time safeCompare utilizing timingSafeEqual.</span><span class="fix">Fix: <code>crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b))</code></span>
+    </div>
+  </div>
+
+  <div class="finding ok ">
+    <div class="finding-header">
+      <div class="finding-title">✓ No timeout on GitHub OAuth fetch calls</div>
+      <span class="badge medium">Resolved</span>
+    </div>
+    <div class="finding-desc">Two <code>fetch()</code> calls to GitHub (token exchange + user info) have no timeout. If GitHub is slow, requests hang indefinitely, exhausting the server's request queue.</div>
+    <div class="finding-meta">
+      <span class="loc">src/routes/auth.ts:42–59</span>
+      <br><span style="color: var(--green); font-weight: 500;">✓ Verified: Wrapped GitHub API fetch calls with AbortSignal.timeout(5000).</span><span class="fix">Fix: wrap with <code>AbortSignal.timeout(5000)</code>.</span>
+    </div>
+  </div>
+
+  <div class="finding ok ">
+    <div class="finding-header">
+      <div class="finding-title">✓ API key visible in browser history and HTML</div>
+      <span class="badge medium">Resolved</span>
+    </div>
+    <div class="finding-desc">Key in URL → browser history, referrer headers. Also in a hidden <code>&lt;input&gt;</code> in the revoke form — visible in devtools. Combined with the log issue (#1), key is exposed in multiple places.</div>
+    <div class="finding-meta">
+      <span class="loc">src/views/auth-done.html:227 · src/routes/auth.ts:101</span>
+      <br><span style="color: var(--green); font-weight: 500;">✓ Verified: Refactored key display to single-use token; revoke form now uses csrf_token instead of raw key.</span><span class="fix">Fix: server-side one-time session for key display. Form revoke should use key hash, not raw key.</span>
+    </div>
+  </div>
+
+  <hr>
+  <h2>Low</h2>
+
+  <div class="finding ok ">
+    <div class="finding-header">
+      <div class="finding-title">✓ API keys never expire</div>
+      <span class="badge low">Resolved</span>
+    </div>
+    <div class="finding-desc"><code>api_keys</code> table has no <code>expires_at</code> column. A leaked key is valid forever until manually revoked. No mechanism to force rotation.</div>
+    <div class="finding-meta">
+      <span class="loc">src/db/schema.sql</span>
+      <br><span style="color: var(--green); font-weight: 500;">✓ Verified: Added expires_at column to api_keys table and checked key expiry in authMiddleware.</span><span class="fix">Add <code>expires_at TIMESTAMPTZ</code>; check in auth middleware; add key rotation command to CLI.</span>
+    </div>
+  </div>
+
+  <div class="finding ok ">
+    <div class="finding-header">
+      <div class="finding-title">✓ No audit log for security events</div>
+      <span class="badge low">Resolved</span>
+    </div>
+    <div class="finding-desc">No logging of key issuance, revocation, failed auth, or rate limit hits beyond Hono's HTTP logger. Impossible to detect or investigate a breach after the fact.</div>
+    <div class="finding-meta">
+      <span class="loc">src/middleware/auth.ts · src/middleware/ratelimit.ts</span>
+      <br><span style="color: var(--green); font-weight: 500;">✓ Verified: Added audit_log table and logged key auth failures and rate limit exceeded events.</span><span class="fix">Add an <code>audit_log</code> table; log auth failures, key events, rate limit exceeded with IP + timestamp.</span>
+    </div>
+  </div>
+
+  <div class="finding ok">
+    <div class="finding-header">
+      <div class="finding-title">✓ Expired database entries leak memory/storage</div>
+      <span class="badge ok">Resolved</span>
+    </div>
+    <div class="finding-desc">No periodic cleanup of expired done_tokens, oauth_codes, or mcp_authorize_requests exists. Expired rows accumulate in the DB indefinitely.</div>
+    <div class="finding-meta">
+      <span class="loc">src/db/cleanup.ts · src/index.ts</span>
+      <br><span style="color: var(--green); font-weight: 500;">✓ Verified: Added cleanExpiredEntries db helper. Runs on startup and schedules hourly cleanup.</span>
+      <span class="fix">Fix: Run DELETE FROM table WHERE expires_at < NOW() on startup and periodically.</span>
+    </div>
+  </div>
+
+  <div class="finding ok ">
+    <div class="finding-header">
+      <div class="finding-title">✓ Shell variable quoting in CLI script</div>
+      <span class="badge low">Resolved</span>
+    </div>
+    <div class="finding-desc"><code>cli/memb.sh</code> — <code>$MEMORY_KEY</code> and <code>$MEMORY_ENDPOINT</code> used unquoted in some command constructions. If config contains spaces or special chars, could cause shell word splitting.</div>
+    <div class="finding-meta">
+      <span class="loc">cli/memb.sh:58–60, 69</span>
+      <br><span style="color: var(--green); font-weight: 500;">✓ Verified: Double-quoted variables in configuration templates inside cli/memb.sh.</span><span class="fix">Double-quote all variable expansions in curl calls.</span>
+    </div>
+  </div>
+
+  <hr>
+  <h2>VPS / Network — Good</h2>
+
+  <div class="finding ok">
+    <div class="finding-header">
+      <div class="finding-title">Postgres not exposed to internet</div>
+      <span class="badge ok">OK</span>
+    </div>
+    <div class="finding-desc">Postgres container is on an internal Docker network only — not port-mapped, not reachable from outside. App binds on <code>127.0.0.1:3000</code> — not world-accessible directly.</div>
+    <div class="finding-meta"><span class="loc">docker-compose.yml</span></div>
+  </div>
+
+  <div class="finding ok">
+    <div class="finding-header">
+      <div class="finding-title">TLS via Caddy Let's Encrypt — automatic renewal</div>
+      <span class="badge ok">OK</span>
+    </div>
+    <div class="finding-desc">HTTPS/2 working, certificate auto-renewed. HTTP/3 (QUIC) also advertised via <code>alt-svc</code>.</div>
+    <div class="finding-meta"><span class="loc">VPS: Caddy</span></div>
+  </div>
+
+  <div class="finding ok">
+    <div class="finding-header">
+      <div class="finding-title">Root SSH requires key (prohibit-password)</div>
+      <span class="badge ok">OK</span>
+    </div>
+    <div class="finding-desc"><code>PermitRootLogin prohibit-password</code> is set. Only 2 authorized keys on root account. Password auth should still be explicitly disabled (see finding above).</div>
+    <div class="finding-meta"><span class="loc">VPS: /etc/ssh/sshd_config</span></div>
+  </div>
+
+  <div class="finding ok">
+    <div class="finding-header">
+      <div class="finding-title">Server version not leaked in responses</div>
+      <span class="badge ok">OK</span>
+    </div>
+    <div class="finding-desc">Caddy only returns <code>server: Caddy</code> — no version numbers. Bun runtime not exposed in headers.</div>
+    <div class="finding-meta"><span class="loc">HTTP headers</span></div>
+  </div>
+
+</div>
+</body>
+</html>

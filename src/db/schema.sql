@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS api_keys (
   key_hash   TEXT UNIQUE NOT NULL,
   name       TEXT DEFAULT 'default',
   last_used  TIMESTAMPTZ,
+  expires_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -69,5 +70,15 @@ CREATE TABLE IF NOT EXISTS done_tokens (
   expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '2 minutes'
 );
 
+CREATE TABLE IF NOT EXISTS audit_log (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event      TEXT NOT NULL,
+  ip         TEXT,
+  user_id    UUID,
+  detail     TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
 CREATE INDEX IF NOT EXISTS idx_rate_limits_user ON rate_limits(user_id, window_start);
+CREATE INDEX IF NOT EXISTS idx_audit_log_event ON audit_log(event, created_at DESC);

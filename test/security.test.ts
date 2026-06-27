@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { app } from "../src/app";
 import { sql } from "../src/db/client";
-import { createApiKey, createTestUser, resetDb } from "./helpers";
+import { createApiKey, createTestUser, resetDb, getCsrfTokenAndCookie } from "./helpers";
 
 function base64UrlSha256(input: string) {
   const hasher = new Bun.CryptoHasher("sha256");
@@ -68,10 +68,16 @@ describe("Security: C3 — OAuth redirect_uri validated against registered clien
     const verifier = "e".repeat(64);
     const challenge = base64UrlSha256(verifier);
 
+    const { token, cookie } = await getCsrfTokenAndCookie("safe-client", "https://good.example/cb", challenge);
+
     const res = await app.request("/oauth/authorize", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Cookie": cookie,
+      },
       body: new URLSearchParams({
+        csrf_token: token,
         client_id: "safe-client",
         redirect_uri: "https://evil.example/steal",
         code_challenge: challenge,
@@ -94,10 +100,16 @@ describe("Security: C3 — OAuth redirect_uri validated against registered clien
     const verifier = "f".repeat(64);
     const challenge = base64UrlSha256(verifier);
 
+    const { token, cookie } = await getCsrfTokenAndCookie("legit-client", "http://localhost:9999/callback", challenge);
+
     const res = await app.request("/oauth/authorize", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Cookie": cookie,
+      },
       body: new URLSearchParams({
+        csrf_token: token,
         client_id: "legit-client",
         redirect_uri: "http://localhost:9999/callback",
         code_challenge: challenge,
@@ -114,13 +126,24 @@ describe("Security: C3 — OAuth redirect_uri validated against registered clien
     const userId = await createTestUser("602", "redirect-noclient");
     await createApiKey(userId, "mem_redirect_noclient_key");
 
+    await sql`
+      INSERT INTO oauth_clients (client_id, redirect_uris)
+      VALUES ('legit-client', '["http://localhost:9999/callback"]')
+    `;
+
     const verifier = "g".repeat(64);
     const challenge = base64UrlSha256(verifier);
 
+    const { token, cookie } = await getCsrfTokenAndCookie("legit-client", "http://localhost:9999/callback", challenge);
+
     const res = await app.request("/oauth/authorize", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Cookie": cookie,
+      },
       body: new URLSearchParams({
+        csrf_token: token,
         client_id: "ghost-client",
         redirect_uri: "http://localhost:9999/callback",
         code_challenge: challenge,
@@ -200,3 +223,58 @@ describe("Security: C1 — age key temp file cleanup", () => {
     expect(after.length).toBe(before.length);
   });
 });
+
+describe("Security: CSRF & REGISTRATION_TOKEN TDD", () => {
+  beforeEach(resetDb);
+  afterEach(resetDb);
+
+  test("POST /auth/revoke rejects without valid CSRF", async () => {
+    const res = await app.request("/auth/revoke", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ key: "mem_key_here", csrf_token: "wrong" }),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  test("POST /oauth/authorize rejects without valid CSRF", async () => {
+    const res = await app.request("/oauth/authorize", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ api_key: "mem_key", client_id: "safe-client", csrf_token: "wrong" }),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  test("POST /oauth/register rejects if REGISTRATION_TOKEN env is set and unauthorized", async () => {
+    process.env.REGISTRATION_TOKEN = "secret-reg-token";
+    try {
+      const res = await app.request("/oauth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_name: "test", redirect_uris: [] }),
+      });
+      expect(res.status).toBe(401);
+    } finally {
+      delete process.env.REGISTRATION_TOKEN;
+    }
+  });
+
+  test("POST /oauth/register accepts if REGISTRATION_TOKEN env is set and authorized", async () => {
+    process.env.REGISTRATION_TOKEN = "secret-reg-token";
+    try {
+      const res = await app.request("/oauth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer secret-reg-token",
+        },
+        body: JSON.stringify({ client_name: "test", redirect_uris: [] }),
+      });
+      expect(res.status).toBe(201);
+    } finally {
+      delete process.env.REGISTRATION_TOKEN;
+    }
+  });
+});
+

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { app } from "../src/app";
-import { createApiKey, createTestUser, resetDb } from "./helpers";
+import { createApiKey, createTestUser, resetDb, getCsrfTokenAndCookie } from "./helpers";
 
 function base64UrlSha256(input: string) {
   const hasher = new Bun.CryptoHasher("sha256");
@@ -37,6 +37,12 @@ describe("D5: OAuth 2.1 PKCE for MCP", () => {
   });
 
   test("authorize page offers a passwordless Continue with GitHub link", async () => {
+    const { sql: dbSql } = await import("../src/db/client");
+    await dbSql`
+      INSERT INTO oauth_clients (client_id, redirect_uris)
+      VALUES ('x', '["http://localhost:9999/cb"]')
+    `;
+
     const challenge = base64UrlSha256("verifier-for-github-login");
     const res = await app.request(
       `/oauth/authorize?client_id=x&redirect_uri=${encodeURIComponent("http://localhost:9999/cb")}&state=abc&code_challenge=${challenge}&code_challenge_method=S256`,
@@ -72,10 +78,16 @@ describe("D5: OAuth 2.1 PKCE for MCP", () => {
     const verifier = "a".repeat(64);
     const challenge = base64UrlSha256(verifier);
 
+    const { token, cookie } = await getCsrfTokenAndCookie(testClientId, "http://localhost:9999/callback", challenge);
+
     const authRes = await app.request("/oauth/authorize", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Cookie": cookie,
+      },
       body: new URLSearchParams({
+        csrf_token: token,
         client_id: testClientId,
         redirect_uri: "http://localhost:9999/callback",
         state: "xyz",
@@ -115,10 +127,16 @@ describe("D5: OAuth 2.1 PKCE for MCP", () => {
     const verifier = "b".repeat(64);
     const challenge = base64UrlSha256(verifier);
 
+    const { token, cookie } = await getCsrfTokenAndCookie(clientRow.client_id, "http://localhost:9999/callback", challenge);
+
     const res = await app.request("/oauth/authorize", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Cookie": cookie,
+      },
       body: new URLSearchParams({
+        csrf_token: token,
         client_id: clientRow.client_id,
         redirect_uri: "http://localhost:9999/callback",
         code_challenge: challenge,
@@ -144,10 +162,16 @@ describe("D5: OAuth 2.1 PKCE for MCP", () => {
     const verifier = "c".repeat(64);
     const challenge = base64UrlSha256(verifier);
 
+    const { token, cookie } = await getCsrfTokenAndCookie(clientRow.client_id, "http://localhost:9999/callback", challenge);
+
     const authRes = await app.request("/oauth/authorize", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Cookie": cookie,
+      },
       body: new URLSearchParams({
+        csrf_token: token,
         client_id: clientRow.client_id,
         redirect_uri: "http://localhost:9999/callback",
         code_challenge: challenge,
@@ -181,10 +205,16 @@ describe("D5: OAuth 2.1 PKCE for MCP", () => {
     const verifier = "d".repeat(64);
     const challenge = base64UrlSha256(verifier);
 
+    const { token, cookie } = await getCsrfTokenAndCookie(clientRow.client_id, "http://localhost:9999/callback", challenge);
+
     const authRes = await app.request("/oauth/authorize", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Cookie": cookie,
+      },
       body: new URLSearchParams({
+        csrf_token: token,
         client_id: clientRow.client_id,
         redirect_uri: "http://localhost:9999/callback",
         code_challenge: challenge,

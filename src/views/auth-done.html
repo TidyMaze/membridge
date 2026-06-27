@@ -224,6 +224,7 @@
   </div>
 
   <form method="POST" action="/auth/revoke" onsubmit="return confirm('Revoke this API key? You will need to login again.')">
+    <input type="hidden" name="csrf_token" value="{{csrfToken}}">
     <input type="hidden" name="key" value="{{key}}">
     <button type="submit" class="logout-btn">Revoke key &amp; logout</button>
   </form>

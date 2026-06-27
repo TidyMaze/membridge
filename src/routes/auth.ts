@@ -47,6 +47,7 @@ auth.get("/auth/callback", async (c) => {
       client_secret: process.env.GH_CLIENT_SECRET,
       code,
     }),
+    signal: AbortSignal.timeout(5000),
   });
   const tokenJson = await tokenRes.json();
   const accessToken = tokenJson.access_token;
@@ -54,6 +55,7 @@ auth.get("/auth/callback", async (c) => {
 
   const userRes = await fetch("https://api.github.com/user", {
     headers: { Authorization: `Bearer ${accessToken}`, "User-Agent": "membridge" },
+    signal: AbortSignal.timeout(5000),
   });
   const ghUser = await userRes.json();
   if (!ghUser?.id) return c.json({ error: "github_user_fetch_failed" }, 502);
@@ -117,6 +119,9 @@ auth.get("/auth/done", async (c) => {
   `;
   if (!row) return c.json({ error: "token_not_found" }, 404);
 
+  const csrfToken = randomHex(16);
+  setCookie(c, "csrf_token", csrfToken, { httpOnly: true, path: "/", maxAge: 600, sameSite: "Lax" });
+
   const key = escapeHtml(row.raw_key as string);
   const user = escapeHtml(row.username as string);
   const configCmd = `memb configure ${key}`;
@@ -124,12 +129,19 @@ auth.get("/auth/done", async (c) => {
   const html = template
     .replaceAll("{{key}}", key)
     .replaceAll("{{user}}", user)
+    .replaceAll("{{csrfToken}}", csrfToken)
     .replaceAll("{{configCmd}}", configCmd);
   return c.html(html);
 });
 
 auth.post("/auth/revoke", async (c) => {
   const body = await c.req.parseBody();
+  const csrfCookie = getCookie(c, "csrf_token");
+  const csrfInput = (body["csrf_token"] as string) ?? "";
+  if (!csrfCookie || csrfCookie !== csrfInput) {
+    return c.json({ error: "invalid_csrf" }, 403);
+  }
+
   const key = (body["key"] as string) ?? "";
   if (key) {
     const keyHash = await sha256Hex(key);

@@ -17,6 +17,9 @@ export async function rateLimitMiddleware(c: Context, next: Next) {
     `;
   });
 
-  if (row.count > LIMIT_PER_HOUR) return c.json({ error: "rate_limited" }, 429);
+  if (row.count > LIMIT_PER_HOUR) {
+    await sql`INSERT INTO audit_log (event, user_id) VALUES ('rate_limited', ${userId})`;
+    return c.json({ error: "rate_limited" }, 429);
+  }
   await next();
 }

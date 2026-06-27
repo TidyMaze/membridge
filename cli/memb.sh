@@ -29,9 +29,9 @@ cmd_configure() {
   local key="$1"
   : "${MEMORY_ENDPOINT:=https://yourdomain.com}"
   cat > "$CONFIG_FILE" <<EOF
-MEMORY_KEY=$key
-MEMORY_ENDPOINT=${MEMORY_ENDPOINT}
-MEMORY_AGE_KEY=$AGE_KEY_FILE
+MEMORY_KEY="$key"
+MEMORY_ENDPOINT="${MEMORY_ENDPOINT}"
+MEMORY_AGE_KEY="$AGE_KEY_FILE"
 EOF
   if [ ! -f "$AGE_KEY_FILE" ]; then
     age-keygen -o "$AGE_KEY_FILE"

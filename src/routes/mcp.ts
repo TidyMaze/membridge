@@ -6,46 +6,51 @@ import { join } from "node:path";
 
 export const mcp = new Hono();
 
-function withSecureTmpKey<T>(ageKey: string, fn: (keyPath: string) => Promise<T>): Promise<T> {
-  const dir = mkdtempSync(join(tmpdir(), "membridge-"));
-  chmodSync(dir, 0o700);
-  const keyPath = join(dir, "k");
-  return Bun.write(keyPath, ageKey.endsWith("\n") ? ageKey : ageKey + "\n")
-    .then(() => { chmodSync(keyPath, 0o600); return fn(keyPath); })
-    .finally(() => { rmSync(dir, { recursive: true, force: true }); });
-}
-
 async function ageDecrypt(ciphertext: Buffer, ageKey: string): Promise<string> {
-  return withSecureTmpKey(ageKey, async (keyPath) => {
-    const dec = Bun.spawn(["age", "-d", "-i", keyPath], { stdin: "pipe", stdout: "pipe", stderr: "pipe" });
-    dec.stdin.write(ciphertext);
+  const dir = mkdtempSync(join(tmpdir(), "membridge-dec-"));
+  chmodSync(dir, 0o700);
+  const cipherPath = join(dir, "c");
+  await Bun.write(cipherPath, ciphertext);
+
+  try {
+    const keyWithNewline = ageKey.endsWith("\n") ? ageKey : ageKey + "\n";
+    const dec = Bun.spawn(["age", "-d", "-i", "-", cipherPath], { stdin: "pipe", stdout: "pipe", stderr: "pipe" });
+    dec.stdin.write(keyWithNewline);
     dec.stdin.end();
+
     const [out, err, exitCode] = await Promise.all([
       new Response(dec.stdout).text(),
       new Response(dec.stderr).text(),
       dec.exited,
     ]);
+
     if (exitCode !== 0) throw new Error(`age decrypt failed: ${err.trim()}`);
     return out;
-  });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 async function ageEncrypt(plaintext: string, ageKey: string): Promise<Buffer> {
-  return withSecureTmpKey(ageKey, async (keyPath) => {
-    const recipientProc = Bun.spawn(["age-keygen", "-y", keyPath], { stdout: "pipe" });
-    const pubKey = (await new Response(recipientProc.stdout).text()).trim();
+  const keyWithNewline = ageKey.endsWith("\n") ? ageKey : ageKey + "\n";
+  const recipientProc = Bun.spawn(["age-keygen", "-y"], { stdin: "pipe", stdout: "pipe" });
+  recipientProc.stdin.write(keyWithNewline);
+  recipientProc.stdin.end();
 
-    const enc = Bun.spawn(["age", "-r", pubKey], { stdin: "pipe", stdout: "pipe", stderr: "pipe" });
-    enc.stdin.write(plaintext);
-    enc.stdin.end();
-    const [out, err, exitCode] = await Promise.all([
-      new Response(enc.stdout).arrayBuffer(),
-      new Response(enc.stderr).text(),
-      enc.exited,
-    ]);
-    if (exitCode !== 0) throw new Error(`age encrypt failed: ${err.trim()}`);
-    return Buffer.from(out);
-  });
+  const pubKey = (await new Response(recipientProc.stdout).text()).trim();
+
+  const enc = Bun.spawn(["age", "-r", pubKey], { stdin: "pipe", stdout: "pipe", stderr: "pipe" });
+  enc.stdin.write(plaintext);
+  enc.stdin.end();
+
+  const [out, err, exitCode] = await Promise.all([
+    new Response(enc.stdout).arrayBuffer(),
+    new Response(enc.stderr).text(),
+    enc.exited,
+  ]);
+
+  if (exitCode !== 0) throw new Error(`age encrypt failed: ${err.trim()}`);
+  return Buffer.from(out);
 }
 
 const AGE_KEY_PROPERTY = {

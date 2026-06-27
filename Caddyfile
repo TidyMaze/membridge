@@ -1,0 +1,15 @@
+membridge.yaro.fr {
+    reverse_proxy 127.0.0.1:3000
+
+    header {
+        # Security headers
+        X-Frame-Options "DENY"
+        X-Content-Type-Options "nosniff"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none';"
+        Referrer-Policy "no-referrer-when-downgrade"
+        
+        # Strip server info
+        -Server
+    }
+}
