@@ -175,9 +175,9 @@
         <div class="dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
         <button class="copy-btn" onclick="copyTerm(this)">copy</button>
       </div>
-      <pre><span class="c1">$</span> memory configure mem_YOUR_KEY   <span class="c1"># after signing in</span>
+      <pre><span class="c1">$</span> memb configure mem_YOUR_KEY   <span class="c1"># after signing in</span>
 <span class="c1">$</span> claude mcp add --transport http membridge https://membridge.yaro.fr/mcp
-<span class="c1">$</span> memory push
+<span class="c1">$</span> memb push
 <span class="c2">✓</span> context encrypted and synced.
 
 <span class="c3">&gt;</span> use membridge to add a note: "ship the v2 API by Friday"
@@ -220,14 +220,14 @@
     <div class="card" style="margin-top:24px">
       <div class="icon" style="margin-bottom:12px">⚡</div>
       <h3>Auto-push with a Claude Code Stop hook</h3>
-      <p style="margin-bottom:14px">Add this to <code class="inline">~/.claude/settings.json</code> — your context is pushed silently every time a session ends, no manual <code class="inline">memory push</code> needed.</p>
+      <p style="margin-bottom:14px">Add this to <code class="inline">~/.claude/settings.json</code> — your context is pushed silently every time a session ends, no manual <code class="inline">memb push</code> needed.</p>
       <div class="term" style="max-width:100%; box-shadow:none;">
         <div class="term-bar">
           <div class="dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
           <button class="copy-btn" onclick="copyTerm(this)">copy</button>
         </div>
         <pre><span class="c1">// ~/.claude/settings.json</span>
-{ <span class="c2">"hooks"</span>: { <span class="c2">"Stop"</span>: [{ <span class="c2">"hooks"</span>: [{ <span class="c2">"type"</span>: <span class="c3">"command"</span>, <span class="c2">"command"</span>: <span class="c3">"memory push --silent 2>/dev/null || true"</span> }] }] } }</pre>
+{ <span class="c2">"hooks"</span>: { <span class="c2">"Stop"</span>: [{ <span class="c2">"hooks"</span>: [{ <span class="c2">"type"</span>: <span class="c3">"command"</span>, <span class="c2">"command"</span>: <span class="c3">"memb push --silent 2>/dev/null || true"</span> }] }] } }</pre>
       </div>
     </div>
   </section>
@@ -292,8 +292,8 @@
 <span class="c2">✓</span> http://localhost:3000/health → {"ok":true}
 
 <span class="c1"># install the CLI and connect Claude Code</span>
-<span class="c1">$</span> ln -sf "$(pwd)/cli/memory.sh" ~/bin/memory
-<span class="c1">$</span> memory configure mem_YOUR_KEY
+<span class="c1">$</span> ln -sf "$(pwd)/cli/memb.sh" ~/bin/memb
+<span class="c1">$</span> memb configure mem_YOUR_KEY
 <span class="c1">$</span> claude mcp add --transport http membridge https://your-domain.com/mcp</pre>
       </div>
     </div>

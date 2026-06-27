@@ -15,7 +15,7 @@ done
 mkdir -p "$CONFIG_DIR"
 
 load_config() {
-  [ -f "$CONFIG_FILE" ] || { echo "Not configured. Run: memory configure <api_key>" >&2; exit 1; }
+  [ -f "$CONFIG_FILE" ] || { echo "Not configured. Run: memb configure <api_key>" >&2; exit 1; }
   # shellcheck disable=SC1090
   source "$CONFIG_FILE"
 }
@@ -92,7 +92,7 @@ cmd_status() {
 }
 
 case "${1:-}" in
-  configure) cmd_configure "${2:?usage: memory configure <api_key>}" ;;
+  configure) cmd_configure "${2:?usage: memb configure <api_key>}" ;;
   login)     cmd_login ;;
   push)      cmd_push ;;
   pull)      cmd_pull ;;
@@ -100,7 +100,7 @@ case "${1:-}" in
   status)    cmd_status ;;
   --silent)  ;; # consumed above
   *)
-    echo "Usage: memory {configure <key>|login|push|pull|edit|status}" >&2
+    echo "Usage: memb {configure <key>|login|push|pull|edit|status}" >&2
     exit 1
     ;;
 esac

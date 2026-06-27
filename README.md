@@ -36,10 +36,10 @@ The CLI has no npm/bun deps — just `curl` and `age` (`brew install age`).
 
 ```bash
 # install
-ln -sf "$(pwd)/cli/memory.sh" ~/bin/memory   # ~/bin must be on $PATH
+ln -sf "$(pwd)/cli/memb.sh" ~/bin/memb   # ~/bin must be on $PATH
 
 # configure (after signing in at membridge.yaro.fr/auth/github)
-memory configure mem_<your-key>
+memb configure mem_<your-key>
 ```
 
 ## Claude Code hook — auto-push on session end
@@ -50,13 +50,13 @@ Add to `~/.claude/settings.json` to push your context every time a Claude Code s
 {
   "hooks": {
     "Stop": [
-      { "hooks": [{ "type": "command", "command": "memory push --silent 2>/dev/null || true" }] }
+      { "hooks": [{ "type": "command", "command": "memb push --silent 2>/dev/null || true" }] }
     ]
   }
 }
 ```
 
-`memory push --silent` suppresses output so the hook doesn't pollute the terminal.
+`memb push --silent` suppresses output so the hook doesn't pollute the terminal.
 
 ## Connect to Claude Code (MCP)
 
