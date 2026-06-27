@@ -70,6 +70,13 @@ CREATE TABLE IF NOT EXISTS done_tokens (
   expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '2 minutes'
 );
 
+CREATE TABLE IF NOT EXISTS sessions (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID REFERENCES users(id) ON DELETE CASCADE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS audit_log (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event      TEXT NOT NULL,

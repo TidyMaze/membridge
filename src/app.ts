@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { auth } from "./routes/auth";
 import { context } from "./routes/context";
+import { dashboard } from "./routes/dashboard";
 import { mcp } from "./routes/mcp";
 import { oauthMeta } from "./routes/oauth-meta";
 import { rateLimitMiddleware } from "./middleware/ratelimit";
@@ -32,6 +33,7 @@ app.get("/install", async (c) => {
 });
 app.route("/", auth);
 app.route("/", context);
+app.route("/", dashboard);
 app.route("/", mcp);
 app.route("/", oauthMeta);
 

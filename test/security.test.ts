@@ -13,41 +13,38 @@ describe("Security: C2 — done token (key never in URL)", () => {
   beforeEach(resetDb);
   afterEach(resetDb);
 
-  test("/auth/done without token returns 400", async () => {
-    const res = await app.request("/auth/done");
-    expect(res.status).toBe(400);
+  test("/dashboard without session redirects to login", async () => {
+    const res = await app.request("/dashboard", { redirect: "manual" });
+    expect(res.status).toBe(302);
   });
 
-  test("/auth/done?key= (old format) returns 400", async () => {
-    const res = await app.request("/auth/done?key=mem_abc&user=foo");
-    expect(res.status).toBe(400);
-  });
-
-  test("/auth/done?token=<valid> shows key and is consumed", async () => {
+  test("/dashboard?token=<valid> shows key and is consumed", async () => {
+    const userId = await createTestUser("899", "alice");
+    await createApiKey(userId, "mem_test_key_123");
     const [row] = await sql`
       INSERT INTO done_tokens (raw_key, username) VALUES ('mem_test_key_123', 'alice') RETURNING id
     `;
     const tokenId = row.id as string;
 
-    const res = await app.request(`/auth/done?token=${tokenId}`);
+    const res = await app.request(`/dashboard?token=${tokenId}`);
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain("mem_test_key_123");
     expect(html).toContain("alice");
 
-    // Token is single-use — second request must fail
-    const res2 = await app.request(`/auth/done?token=${tokenId}`);
-    expect(res2.status).toBe(404);
+    // Token is single-use — second request must redirect to login because token is consumed
+    const res2 = await app.request(`/dashboard?token=${tokenId}`, { redirect: "manual" });
+    expect(res2.status).toBe(302);
   });
 
-  test("/auth/done?token=<expired> returns 404", async () => {
+  test("/dashboard?token=<expired> redirects to login", async () => {
     const [row] = await sql`
       INSERT INTO done_tokens (raw_key, username, expires_at)
       VALUES ('mem_expired', 'bob', NOW() - INTERVAL '1 second')
       RETURNING id
     `;
-    const res = await app.request(`/auth/done?token=${row.id}`);
-    expect(res.status).toBe(404);
+    const res = await app.request(`/dashboard?token=${row.id}`, { redirect: "manual" });
+    expect(res.status).toBe(302);
   });
 });
 
@@ -228,11 +225,21 @@ describe("Security: CSRF & REGISTRATION_TOKEN TDD", () => {
   beforeEach(resetDb);
   afterEach(resetDb);
 
-  test("POST /auth/revoke rejects without valid CSRF", async () => {
-    const res = await app.request("/auth/revoke", {
+  test("POST /dashboard/key/revoke rejects without valid CSRF", async () => {
+    const userId = await createTestUser("850", "csrf-test");
+    const sessionId = crypto.randomUUID();
+    await sql`
+      INSERT INTO sessions (id, user_id, expires_at)
+      VALUES (${sessionId}, ${userId}, NOW() + INTERVAL '1 hour')
+    `;
+
+    const res = await app.request("/dashboard/key/revoke", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ key: "mem_key_here", csrf_token: "wrong" }),
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Cookie": `membridge_session=${sessionId}`
+      },
+      body: new URLSearchParams({ id: "some-key-id", csrf_token: "wrong" }),
     });
     expect(res.status).toBe(403);
   });

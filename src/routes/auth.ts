@@ -103,49 +103,29 @@ auth.get("/auth/callback", async (c) => {
   const [token] = await sql`
     INSERT INTO done_tokens (raw_key, username) VALUES (${rawKey}, ${username}) RETURNING id
   `;
-  return c.redirect(`/auth/done?token=${token.id}`);
-});
 
-function escapeHtml(s: string) {
-  return s.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]!));
-}
-
-auth.get("/auth/done", async (c) => {
-  const tokenId = c.req.query("token");
-  if (!tokenId) return c.json({ error: "missing_token" }, 400);
-
-  const [row] = await sql`
-    DELETE FROM done_tokens WHERE id = ${tokenId} AND expires_at > NOW() RETURNING raw_key, username
+  const sessionExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+  const [session] = await sql`
+    INSERT INTO sessions (user_id, expires_at)
+    VALUES (${user.id}, ${sessionExpiresAt})
+    RETURNING id
   `;
-  if (!row) return c.json({ error: "token_not_found" }, 404);
+  setCookie(c, "membridge_session", session.id, {
+    httpOnly: true,
+    path: "/",
+    expires: sessionExpiresAt,
+    sameSite: "Lax",
+    secure: process.env.NODE_ENV === "production",
+  });
 
-  const csrfToken = randomHex(16);
-  setCookie(c, "csrf_token", csrfToken, { httpOnly: true, path: "/", maxAge: 600, sameSite: "Lax" });
-
-  const key = escapeHtml(row.raw_key as string);
-  const user = escapeHtml(row.username as string);
-  const configCmd = `memb configure ${key}`;
-  const template = await Bun.file(new URL("../views/auth-done.html", import.meta.url)).text();
-  const html = template
-    .replaceAll("{{key}}", key)
-    .replaceAll("{{user}}", user)
-    .replaceAll("{{csrfToken}}", csrfToken)
-    .replaceAll("{{configCmd}}", configCmd);
-  return c.html(html);
+  return c.redirect(`/dashboard?token=${token.id}`);
 });
 
-auth.post("/auth/revoke", async (c) => {
-  const body = await c.req.parseBody();
-  const csrfCookie = getCookie(c, "csrf_token");
-  const csrfInput = (body["csrf_token"] as string) ?? "";
-  if (!csrfCookie || csrfCookie !== csrfInput) {
-    return c.json({ error: "invalid_csrf" }, 403);
+auth.post("/auth/logout", async (c) => {
+  const sessionId = getCookie(c, "membridge_session");
+  if (sessionId) {
+    await sql`DELETE FROM sessions WHERE id = ${sessionId}`;
+    setCookie(c, "membridge_session", "", { httpOnly: true, path: "/", maxAge: 0, sameSite: "Lax" });
   }
-
-  const key = (body["key"] as string) ?? "";
-  if (key) {
-    const keyHash = await sha256Hex(key);
-    await sql`DELETE FROM api_keys WHERE key_hash = ${keyHash}`;
-  }
-  return c.redirect("/?revoked=1");
+  return c.redirect("https://tidymaze.github.io/membridge/");
 });
