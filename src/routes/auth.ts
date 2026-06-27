@@ -71,11 +71,26 @@ auth.get("/auth/callback", async (c) => {
     RETURNING id
   `;
 
-  const rawKey = `mem_${randomHex(32)}`;
-  const keyHash = await sha256Hex(rawKey);
-  await sql`
-    INSERT INTO api_keys (user_id, key_hash) VALUES (${user.id}, ${keyHash})
+  // Check if the user already has at least one active API key
+  const [keysCountRow] = await sql`
+    SELECT COUNT(*)::int as count FROM api_keys WHERE user_id = ${user.id}
   `;
+  const needsKey = keysCountRow.count === 0;
+
+  let rawKey: string | null = null;
+  let token: { id: string } | null = null;
+
+  if (needsKey) {
+    rawKey = `mem_${randomHex(32)}`;
+    const keyHash = await sha256Hex(rawKey);
+    await sql`
+      INSERT INTO api_keys (user_id, key_hash) VALUES (${user.id}, ${keyHash})
+    `;
+    const [tokenRow] = await sql`
+      INSERT INTO done_tokens (raw_key, username) VALUES (${rawKey}, ${username}) RETURNING id
+    `;
+    token = tokenRow as { id: string };
+  }
 
   const continuationId = getCookie(c, "mcp_continuation");
   if (continuationId) {
@@ -100,10 +115,6 @@ auth.get("/auth/callback", async (c) => {
     }
   }
 
-  const [token] = await sql`
-    INSERT INTO done_tokens (raw_key, username) VALUES (${rawKey}, ${username}) RETURNING id
-  `;
-
   const sessionExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
   const [session] = await sql`
     INSERT INTO sessions (user_id, expires_at)
@@ -118,7 +129,8 @@ auth.get("/auth/callback", async (c) => {
     secure: process.env.NODE_ENV === "production",
   });
 
-  return c.redirect(`/dashboard?token=${token.id}`);
+  const redirectUrl = token ? `/dashboard?token=${token.id}` : "/dashboard";
+  return c.redirect(redirectUrl);
 });
 
 auth.post("/auth/logout", async (c) => {
