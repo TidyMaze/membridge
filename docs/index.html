@@ -87,15 +87,26 @@
   code.inline { font-family: var(--mono); background: rgba(124,92,255,0.12); color: var(--accent-2); padding: 2px 6px; border-radius: 5px; font-size: 0.85em; }
 
   .illustration { margin: 0 auto; display: block; max-width: 100%; }
-  .illustration.hero-img { max-width: 560px; margin-bottom: 50px; border-radius: 16px; }
+  .illustration.hero-img { max-width: min(560px, 100%); margin-bottom: 50px; border-radius: 16px; }
   .illustration.framed { border-radius: 14px; border: 1px solid var(--border); background: var(--bg-soft); padding: 18px; }
   .illustration.framed.on-white { background: #fff; padding: 24px; }
-  .illustration.diagram-img { max-width: 640px; margin: 36px auto 0; }
-  .illustration.split-img { max-width: 720px; margin: 36px auto 0; }
-  .illustration.sequence-img { max-width: 360px; }
-  .illustration.stack-img { max-width: 220px; border-radius: 14px; }
+  .illustration.diagram-img { max-width: min(640px, 100%); margin: 36px auto 0; }
+  .illustration.split-img { max-width: min(720px, 100%); margin: 36px auto 0; }
+  .illustration.sequence-img { max-width: min(360px, 100%); }
+  .illustration.stack-img { max-width: min(220px, 100%); border-radius: 14px; }
   .quickstart-layout { display: flex; align-items: center; gap: 32px; justify-content: center; flex-wrap: wrap; }
   .quickstart-layout .term { margin: 0; }
+
+  @media (max-width: 600px) {
+    nav .links { display: none; }
+    .hero { padding: 60px 0 40px; }
+    .sub { font-size: 1rem; }
+    .section-head h2 { font-size: 1.5rem; }
+    .term pre { font-size: 0.76rem; padding: 14px 16px; }
+    .card pre { font-size: 0.74rem !important; padding: 10px 12px !important; }
+    .quickstart-layout { flex-direction: column; }
+    .illustration.stack-img { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -184,9 +195,21 @@
 
     <div class="card" style="margin-top:24px">
       <h3>⚡ Auto-push with a Claude Code Stop hook</h3>
-      <p>Add one line to <code class="inline">~/.claude/settings.json</code> and your context is pushed silently every time a Claude Code session ends — no manual <code class="inline">memory push</code> required:</p>
-      <pre style="margin:14px 0 0; font-family:var(--mono); font-size:0.82rem; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:14px; overflow-x:auto; color:#c9d4de">{"hooks": {"Stop": [{"hooks": [{"type": "command",
-  "command": "memory push --silent 2>/dev/null || true"}]}]}}</pre>
+      <p>Add this to <code class="inline">~/.claude/settings.json</code> and your context is pushed silently every time a Claude Code session ends — no manual <code class="inline">memory push</code> required:</p>
+      <div class="term" style="margin:14px 0 0; max-width:100%; box-shadow:none;">
+        <div class="term-bar"><span></span><span></span><span></span></div>
+        <pre><span class="c1">// ~/.claude/settings.json</span>
+{
+  <span class="c2">"hooks"</span>: {
+    <span class="c2">"Stop"</span>: [{
+      <span class="c2">"hooks"</span>: [{
+        <span class="c2">"type"</span>: <span class="c3">"command"</span>,
+        <span class="c2">"command"</span>: <span class="c3">"memory push --silent 2>/dev/null || true"</span>
+      }]
+    }]
+  }
+}</pre>
+      </div>
     </div>
   </section>
 
