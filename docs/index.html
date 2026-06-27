@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MemBridge — one encrypted memory, everywhere Claude works</title>
 <meta name="description" content="MemBridge syncs an encrypted memory file between Claude Code and Claude.ai over MCP, with GitHub OAuth and OAuth 2.1 PKCE.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%237c5cff'/><text x='16' y='22' font-size='18' text-anchor='middle' fill='white' font-family='monospace'>m</text></svg>">
 <style>
   :root {
     --bg: #0b0d10;
@@ -44,21 +45,34 @@
 
   main { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 0 24px; }
 
-  .hero { padding: 110px 0 70px; text-align: center; }
+  .hero { padding: 80px 0 60px; text-align: center; }
   .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text-dim); font-size: 0.8rem; margin-bottom: 28px; }
   .pill b { color: var(--accent-2); }
   h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.08; margin: 0 0 20px; letter-spacing: -0.02em; }
   h1 .grad { background: linear-gradient(135deg, var(--accent-2), var(--accent)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .sub { font-size: 1.15rem; color: var(--text-dim); max-width: 620px; margin: 0 auto 36px; line-height: 1.6; }
-  .cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 50px; }
+  .sub { font-size: 1.1rem; color: var(--text-dim); max-width: 580px; margin: 0 auto 36px; line-height: 1.6; }
+  .cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 48px; }
 
-  .term { margin: 0 auto; max-width: 680px; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; text-align: left; box-shadow: 0 30px 80px -30px rgba(124,92,255,0.25); }
-  .term-bar { display: flex; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
-  .term-bar span { width: 11px; height: 11px; border-radius: 50%; background: #3a4250; }
+  /* Terminal */
+  .term { position: relative; margin: 0 auto; max-width: 680px; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; text-align: left; box-shadow: 0 30px 80px -30px rgba(124,92,255,0.25); }
+  .term-bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .term-bar .dots { display: flex; gap: 6px; }
+  .term-bar .dot-r { width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; }
+  .term-bar .dot-y { width: 11px; height: 11px; border-radius: 50%; background: #ffbd2e; }
+  .term-bar .dot-g { width: 11px; height: 11px; border-radius: 50%; background: #28c840; }
   .term pre { margin: 0; padding: 20px 22px; font-family: var(--mono); font-size: 0.86rem; line-height: 1.7; color: #c9d4de; overflow-x: auto; }
   .term .c1 { color: var(--text-dim); }
   .term .c2 { color: var(--accent-2); }
   .term .c3 { color: var(--accent); }
+
+  /* Copy button */
+  .copy-btn {
+    margin-left: auto; padding: 3px 10px; font-size: 0.75rem; font-family: var(--mono);
+    background: transparent; border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+  }
+  .copy-btn:hover { border-color: var(--accent-2); color: var(--accent-2); }
+  .copy-btn.copied { border-color: var(--accent-2); color: var(--accent-2); }
 
   section { padding: 70px 0; border-top: 1px solid var(--border); }
   .section-head { text-align: center; margin-bottom: 48px; }
@@ -75,37 +89,50 @@
   .card h3 { margin: 0 0 8px; font-size: 1.05rem; }
   .card p { margin: 0; color: var(--text-dim); font-size: 0.92rem; line-height: 1.6; }
 
-  .flow { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
-  .flow .node { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; font-family: var(--mono); font-size: 0.85rem; text-align: center; min-width: 140px; }
+  /* Flow diagram */
+  .flow { display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap; margin-top: 10px; }
+  .flow .node { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 14px 22px; font-family: var(--mono); font-size: 0.85rem; text-align: center; min-width: 150px; }
   .flow .node b { display: block; color: var(--accent-2); margin-bottom: 4px; font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; }
-  .flow .arrow { color: var(--text-dim); font-size: 1.2rem; }
+  .flow .arrow { display: flex; align-items: center; color: var(--accent); padding: 0 8px; font-size: 1.4rem; line-height: 1; }
+
+  /* Image handling */
+  .illustration { margin: 0 auto; display: block; max-width: 100%; }
+  .illustration.hero-img {
+    max-width: min(560px, 100%); margin-bottom: 40px; border-radius: 16px;
+    clip-path: inset(0 0 38px 0 round 16px);
+  }
+  .illustration.framed { border-radius: 14px; border: 1px solid var(--border); background: var(--bg-soft); padding: 18px; }
+  .illustration.diagram-img {
+    max-width: min(640px, 100%); margin: 36px auto 0;
+    filter: invert(0.88) hue-rotate(185deg) saturate(0.9);
+    border-radius: 14px; border: 1px solid var(--border);
+  }
+  .illustration.split-img {
+    max-width: min(720px, 100%); margin: 36px auto 0;
+    clip-path: inset(0 0 62px 0 round 14px);
+  }
+  .illustration.stack-img { max-width: min(200px, 100%); border-radius: 14px; clip-path: inset(0 0 32px 0 round 14px); }
+
+  /* Quickstart */
+  .quickstart-layout { display: flex; align-items: center; gap: 32px; justify-content: center; flex-wrap: wrap; }
+  .quickstart-layout .term { margin: 0; }
 
   footer { border-top: 1px solid var(--border); padding: 40px 0 60px; text-align: center; color: var(--text-dim); font-size: 0.85rem; }
-  footer a { color: var(--text-dim); margin: 0 10px; }
+  footer a { color: var(--text-dim); margin: 0 14px; padding: 8px 0; display: inline-block; }
   footer a:hover { color: var(--text); }
 
   code.inline { font-family: var(--mono); background: rgba(124,92,255,0.12); color: var(--accent-2); padding: 2px 6px; border-radius: 5px; font-size: 0.85em; }
 
-  .illustration { margin: 0 auto; display: block; max-width: 100%; }
-  .illustration.hero-img { max-width: min(560px, 100%); margin-bottom: 50px; border-radius: 16px; }
-  .illustration.framed { border-radius: 14px; border: 1px solid var(--border); background: var(--bg-soft); padding: 18px; }
-  .illustration.framed.on-white { background: #fff; padding: 24px; }
-  .illustration.diagram-img { max-width: min(640px, 100%); margin: 36px auto 0; }
-  .illustration.split-img { max-width: min(720px, 100%); margin: 36px auto 0; }
-  .illustration.sequence-img { max-width: min(360px, 100%); }
-  .illustration.stack-img { max-width: min(220px, 100%); border-radius: 14px; }
-  .quickstart-layout { display: flex; align-items: center; gap: 32px; justify-content: center; flex-wrap: wrap; }
-  .quickstart-layout .term { margin: 0; }
-
   @media (max-width: 600px) {
     nav .links { display: none; }
-    .hero { padding: 60px 0 40px; }
+    .hero { padding: 50px 0 36px; }
     .sub { font-size: 1rem; }
     .section-head h2 { font-size: 1.5rem; }
     .term pre { font-size: 0.76rem; padding: 14px 16px; }
     .card pre { font-size: 0.74rem !important; padding: 10px 12px !important; }
     .quickstart-layout { flex-direction: column; }
     .illustration.stack-img { display: none; }
+    footer a { margin: 0 8px; }
   }
 </style>
 </head>
@@ -130,9 +157,8 @@
     <div class="pill">Open source &amp; self-hostable — or use the free hosted instance</div>
     <h1>One encrypted memory.<br><span class="grad">Everywhere Claude works.</span></h1>
     <p class="sub">
-      MemBridge is a tiny open-source bridge that keeps your personal context — notes, decisions, rules —
-      in sync between your terminal and the browser. Stored as ciphertext, exposed to both sides as a
-      standard MCP server. Use the free hosted instance, or self-host it on your own infrastructure.
+      Keep your notes, decisions, and rules in sync between Claude Code and Claude.ai —
+      stored as ciphertext, exposed as a standard MCP server.
     </p>
     <div class="cta">
       <a class="btn btn-primary" href="https://membridge.yaro.fr/auth/github">Use the free hosted instance →</a>
@@ -141,19 +167,15 @@
     </div>
 
     <div class="term">
-      <div class="term-bar"><span></span><span></span><span></span></div>
-      <pre><span class="c1"># 1. install the CLI (bash + age only, no npm)</span>
-<span class="c1">$</span> ln -sf "$(pwd)/cli/memory.sh" ~/bin/memory
-<span class="c1">$</span> memory configure mem_&lt;your-key&gt;
-
-<span class="c1"># 2. connect Claude Code to the MCP server</span>
+      <div class="term-bar">
+        <div class="dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <button class="copy-btn" onclick="copyTerm(this)">copy</button>
+      </div>
+      <pre><span class="c1">$</span> memory configure mem_YOUR_KEY   <span class="c1"># after signing in</span>
 <span class="c1">$</span> claude mcp add --transport http membridge https://membridge.yaro.fr/mcp
-
-<span class="c1"># 3. push local context (or let the Stop hook do it automatically)</span>
 <span class="c1">$</span> memory push
-<span class="c2">✓</span> context encrypted with age, synced.
+<span class="c2">✓</span> context encrypted and synced.
 
-<span class="c1"># later, in Claude.ai web or Claude Code…</span>
 <span class="c3">&gt;</span> use membridge to add a note: "ship the v2 API by Friday"
 <span class="c2">✓</span> note added — visible next time Claude Code pulls.</pre>
     </div>
@@ -172,7 +194,7 @@
       <div class="arrow">⇄</div>
       <div class="node"><b>Browser</b>Claude.ai<br>MCP tool calls</div>
     </div>
-    <img class="illustration diagram-img framed on-white" src="images/how-it-works-encrypt-bridge-decrypt.png" alt="Diagram: your device runs age encrypt, MemBridge stores ciphertext only, the other device runs age decrypt">
+    <img class="illustration diagram-img" src="images/how-it-works-encrypt-bridge-decrypt.png" alt="Diagram: your device runs age encrypt, MemBridge stores ciphertext only, the other device runs age decrypt">
     <div class="grid3" style="margin-top:48px">
       <div class="card">
         <div class="icon">①</div>
@@ -182,9 +204,7 @@
       <div class="card">
         <div class="icon">②</div>
         <h3>Encrypted with age</h3>
-        <p>The CLI encrypts fully client-side — your key never leaves your machine. MCP tool calls (from
-        Claude Code or Claude.ai) send the key over TLS so the server can decrypt on your behalf — not
-        zero-knowledge, but never persisted.</p>
+        <p>The CLI encrypts fully client-side — your key never leaves your machine. MCP tool calls send the key over TLS so the server can decrypt on your behalf — never persisted.</p>
       </div>
       <div class="card">
         <div class="icon">③</div>
@@ -194,21 +214,16 @@
     </div>
 
     <div class="card" style="margin-top:24px">
-      <h3>⚡ Auto-push with a Claude Code Stop hook</h3>
-      <p>Add this to <code class="inline">~/.claude/settings.json</code> and your context is pushed silently every time a Claude Code session ends — no manual <code class="inline">memory push</code> required:</p>
-      <div class="term" style="margin:14px 0 0; max-width:100%; box-shadow:none;">
-        <div class="term-bar"><span></span><span></span><span></span></div>
+      <div class="icon" style="margin-bottom:12px">⚡</div>
+      <h3>Auto-push with a Claude Code Stop hook</h3>
+      <p style="margin-bottom:14px">Add this to <code class="inline">~/.claude/settings.json</code> — your context is pushed silently every time a session ends, no manual <code class="inline">memory push</code> needed.</p>
+      <div class="term" style="max-width:100%; box-shadow:none;">
+        <div class="term-bar">
+          <div class="dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+          <button class="copy-btn" onclick="copyTerm(this)">copy</button>
+        </div>
         <pre><span class="c1">// ~/.claude/settings.json</span>
-{
-  <span class="c2">"hooks"</span>: {
-    <span class="c2">"Stop"</span>: [{
-      <span class="c2">"hooks"</span>: [{
-        <span class="c2">"type"</span>: <span class="c3">"command"</span>,
-        <span class="c2">"command"</span>: <span class="c3">"memory push --silent 2>/dev/null || true"</span>
-      }]
-    }]
-  }
-}</pre>
+{ <span class="c2">"hooks"</span>: { <span class="c2">"Stop"</span>: [{ <span class="c2">"hooks"</span>: [{ <span class="c2">"type"</span>: <span class="c3">"command"</span>, <span class="c2">"command"</span>: <span class="c3">"memory push --silent 2>/dev/null || true"</span> }] }] } }</pre>
       </div>
     </div>
   </section>
@@ -221,8 +236,9 @@
     </div>
     <img class="illustration split-img framed" src="images/security-in-transit-at-rest.png" alt="Diagram: data shielded in a TLS tunnel while in transit, then stored as scrambled ciphertext in a database at rest">
     <div class="grid2" style="margin-top:36px">
-      <div class="card">
-        <h3>🔐 age encryption</h3>
+      <div class="card" style="grid-column: 1 / -1">
+        <div class="icon">④</div>
+        <h3>age encryption</h3>
         <p>Context is stored as ciphertext only. The CLI's <code class="inline">push</code>/<code class="inline">pull</code>
         are end-to-end — the server never sees your key. MCP tool calls pass the key as an argument over TLS
         so the server can decrypt on your behalf (necessary for Claude.ai web, which has no local crypto) —
@@ -230,20 +246,24 @@
         non-interactive subprocesses (<code class="inline">claude -p</code>) do not inherit MCP auth.</p>
       </div>
       <div class="card">
-        <h3>🪪 GitHub OAuth + API keys</h3>
-        <p>Identity comes from GitHub. API keys are sha256-hashed at rest; the raw key is shown exactly once.</p>
-      </div>
-      <div class="card" style="display:flex; gap:18px; align-items:center; flex-wrap:wrap;">
-        <img class="illustration sequence-img" style="max-width:120px; flex-shrink:0;" src="images/oauth-pkce-sequence.png" alt="Sequence diagram: client registers, redirects, logs in via GitHub, consents, exchanges a code, and receives a token">
-        <div>
-          <h3>🔁 OAuth 2.1 + PKCE for MCP</h3>
-          <p>Claude Code and Claude.ai authorize via standard dynamic client registration and PKCE — no
-          manually-managed client secrets.</p>
-        </div>
+        <div class="icon">⑤</div>
+        <h3>GitHub OAuth + API keys</h3>
+        <p>Identity comes from GitHub OAuth. API keys are sha256-hashed in the database — the raw key is shown exactly once at signup and never retrievable again. Revoke and reissue any time.</p>
       </div>
       <div class="card">
-        <h3>🚧 Rate limited</h3>
-        <p>Per-user sliding window rate limiting protects the API from runaway clients.</p>
+        <div class="icon">⑥</div>
+        <h3>OAuth 2.1 + PKCE for MCP</h3>
+        <p>Claude Code and Claude.ai authorize via standard dynamic client registration and PKCE — no manually-managed client secrets, no shared passwords. The authorization server is the MemBridge server itself.</p>
+      </div>
+      <div class="card">
+        <div class="icon">⑦</div>
+        <h3>Rate limited</h3>
+        <p>Per-user sliding window rate limiting (100 req/hr) protects the API from runaway clients. Excess requests get a <code class="inline">429</code> with a clear error message.</p>
+      </div>
+      <div class="card">
+        <div class="icon">⑧</div>
+        <h3>No plaintext ever stored</h3>
+        <p>The database only holds the encrypted blob and its byte size. There are no logs of context content, no S3 backups of plaintext, no admin interface that could expose your data.</p>
       </div>
     </div>
   </section>
@@ -258,15 +278,18 @@
     <div class="quickstart-layout">
       <img class="illustration stack-img" src="images/quickstart-one-command-stack.png" alt="An arrow labeled with a dollar-sign terminal prompt dropping into a stacked server, gear, and shield, representing one command deploying the whole stack">
       <div class="term">
-        <div class="term-bar"><span></span><span></span><span></span></div>
+        <div class="term-bar">
+          <div class="dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+          <button class="copy-btn" onclick="copyTerm(this)">copy</button>
+        </div>
         <pre><span class="c1">$</span> git clone https://github.com/TidyMaze/membridge && cd membridge
 <span class="c1">$</span> cp .env.example .env   <span class="c1"># set GH_CLIENT_ID / SECRET / BASE_URL</span>
 <span class="c1">$</span> docker compose up -d --build
 <span class="c2">✓</span> http://localhost:3000/health → {"ok":true}
 
-<span class="c1"># install the CLI, configure, connect Claude Code</span>
+<span class="c1"># install the CLI and connect Claude Code</span>
 <span class="c1">$</span> ln -sf "$(pwd)/cli/memory.sh" ~/bin/memory
-<span class="c1">$</span> memory configure mem_&lt;key-from-/auth/done&gt;
+<span class="c1">$</span> memory configure mem_YOUR_KEY
 <span class="c1">$</span> claude mcp add --transport http membridge https://your-domain.com/mcp</pre>
       </div>
     </div>
@@ -275,11 +298,22 @@
 
 <footer>
   MemBridge — built with Bun, Hono, Postgres, age, and MCP.
-  <div>
+  <div style="margin-top:10px">
     <a href="https://github.com/TidyMaze/membridge">GitHub</a>
     <a href="https://github.com/TidyMaze/membridge/blob/main/DEPLOYMENT.md">Deployment guide</a>
   </div>
 </footer>
 
+<script>
+function copyTerm(btn) {
+  const pre = btn.closest('.term').querySelector('pre');
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
 </body>
 </html>
